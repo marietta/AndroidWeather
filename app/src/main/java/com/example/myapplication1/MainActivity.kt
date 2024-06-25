@@ -15,18 +15,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.client.HttpClient as KtorHttpClient
-import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +53,7 @@ fun MyApp(content: @Composable () -> Unit) {
 @Composable
 fun MakeApiCall() {
     val responseCode = remember { mutableIntStateOf(0) }
+    val responseJson = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(key1 = true) {
         val client = KtorHttpClient(Android) {
@@ -62,6 +64,8 @@ fun MakeApiCall() {
 
         val response = client.get("https://jsonplaceholder.typicode.com/posts/1")
         responseCode.intValue = response.status.value
+        responseJson.value = response.body()
+
 
         client.close()
     }
@@ -78,15 +82,15 @@ fun MakeApiCall() {
         )
 
         Text(
-            "Response Code: ${responseCode.intValue}",
+            "Response Json: ${responseJson.value}",
             fontSize = 24.sp
         )
         Image(
-        painter = painterResource(id = R.drawable.jetcasterhero),
-        contentDescription = "Your image description",
-        modifier = Modifier
-            .height(200.dp)
-    )
+            painter = painterResource(id = R.drawable.jetcasterhero),
+            contentDescription = "Your image description",
+            modifier = Modifier
+                .height(200.dp)
+        )
 
     }
 }
