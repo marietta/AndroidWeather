@@ -22,12 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.client.HttpClient as KtorHttpClient
+import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,19 +59,25 @@ fun MyApp(content: @Composable () -> Unit) {
 @Composable
 fun MakeApiCall() {
     val responseCode = remember { mutableIntStateOf(0) }
-    val responseJson = remember { mutableStateOf<String?>(null) }
+    val post = remember { mutableStateOf<Data?>(null) }
 
     LaunchedEffect(key1 = true) {
-        val client = KtorHttpClient(Android) {
+        val client = HttpClient(Android) {
             install(ContentNegotiation) {
                 json()
             }
+            defaultRequest {
+                headers {
+                    contentType(ContentType.Application.Json)
+                }
+                // this: DefaultRequestBuilder
+            }
         }
 
-        val response = client.get("https://jsonplaceholder.typicode.com/posts/1")
-        responseCode.intValue = response.status.value
-        responseJson.value = response.body()
+        val response: HttpResponse = client.get("https://jsonplaceholder.typicode.com/posts/1")
 
+        post.value = response.body()
+        responseCode.intValue=response.status.value
 
         client.close()
     }
@@ -82,7 +94,7 @@ fun MakeApiCall() {
         )
 
         Text(
-            "Response Json: ${responseJson.value}",
+            "Response Json: ${post.value?.title}",
             fontSize = 24.sp
         )
         Image(
@@ -94,3 +106,11 @@ fun MakeApiCall() {
 
     }
 }
+
+@Serializable
+data class Data(
+    val userId: Int,
+    val id: Int,
+    val title: String,
+    val body: String
+)
