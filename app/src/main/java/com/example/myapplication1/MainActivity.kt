@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -41,6 +43,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +54,10 @@ class MainActivity : ComponentActivity() {
                 val data = remember { mutableStateOf<WeatherapiCurrent?>(null) }
 
                 LaunchedEffect(Unit) {
-                    fetchData(data)
+                    while (true) {
+                        fetchData(data)
+                        delay(15 * 60 * 1000)
+                    }
                 }
 
                 when (currentOrientation) {
@@ -90,12 +96,21 @@ suspend fun fetchData(data: MutableState<WeatherapiCurrent?>) {
 
 @Composable
 fun MyApp(content: @Composable () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        content()
-    }
+    var useDarkTheme = true
+    MaterialTheme(
+        colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
+        content = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground,
+            ) {
+                content()
+            }
+        }
+    )
+
+
 }
 
 @Composable
@@ -110,12 +125,12 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
             modifier = Modifier
                 .padding(10.dp)
                 .fillMaxWidth(0.5f),
-            verticalArrangement = Arrangement.SpaceAround,
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 "${data.current?.tempC} °C",
-                fontSize = 64.sp,
+                fontSize = 92.sp,
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold
             )
@@ -123,12 +138,16 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 "${data.current?.condition?.text}",
                 fontSize = 32.sp
             )
+            Text(
+                "Last updated: ${data.current?.lastUpdated}",
+                fontSize = 18.sp,
+            )
         }
         Column(
             modifier = Modifier
                 .padding(10.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceAround,
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -140,6 +159,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                     .height(300.dp)
             )
 
+
         }
     }
 
@@ -150,13 +170,13 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
 fun PortraitLayout(data: WeatherapiCurrent) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(60.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.SpaceAround,
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
         Text(
             "${data.current?.tempC} °C",
-            fontSize = 64.sp,
+            fontSize = 92.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Bold
         )
@@ -174,5 +194,9 @@ fun PortraitLayout(data: WeatherapiCurrent) {
                 .height(300.dp)
         )
 
+        Text(
+            "Last updated: ${data.current?.lastUpdated}",
+            fontSize = 12.sp,
+        )
     }
 }
