@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,8 +21,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myapplication1.dto.WeatherapiCurrent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
@@ -29,11 +33,11 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,8 +62,8 @@ fun MyApp(content: @Composable () -> Unit) {
 
 @Composable
 fun MakeApiCall() {
-    val responseCode = remember { mutableIntStateOf(0) }
-    val post = remember { mutableStateOf<Data?>(null) }
+    val responseIconCode = remember { mutableIntStateOf(0) }
+    val data = remember { mutableStateOf<WeatherapiCurrent?>(null) }
 
     LaunchedEffect(key1 = true) {
         val client = HttpClient(Android) {
@@ -74,10 +78,14 @@ fun MakeApiCall() {
             }
         }
 
-        val response: HttpResponse = client.get("https://jsonplaceholder.typicode.com/posts/1")
 
-        post.value = response.body()
-        responseCode.intValue=response.status.value
+        val response: HttpResponse =
+            client.get("https://api.weatherapi.com/v1/current.json?q=Budapest") {
+                parameter("key", "1c0a7e979c9c46da9dd112808242606")
+            }
+
+        responseIconCode.intValue = response.status.value
+        data.value = response.body()
 
         client.close()
     }
@@ -89,28 +97,25 @@ fun MakeApiCall() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Response Code: ${responseCode.intValue}",
-            fontSize = 36.sp
+            "${data.value?.current?.tempC} °C",
+            fontSize = 56.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Bold
         )
 
         Text(
-            "Response Json: ${post.value?.title}",
-            fontSize = 24.sp
+            "${data.value?.current?.condition?.text}",
+            fontSize = 32.sp
         )
         Image(
-            painter = painterResource(id = R.drawable.jetcasterhero),
-            contentDescription = "Your image description",
+            painter = painterResource(
+                id = R.drawable.w116
+            ),
+            contentDescription = "weather image",
             modifier = Modifier
+                .fillMaxWidth()
                 .height(200.dp)
         )
 
     }
 }
-
-@Serializable
-data class Data(
-    val userId: Int,
-    val id: Int,
-    val title: String,
-    val body: String
-)
