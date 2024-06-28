@@ -52,6 +52,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,12 +138,12 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround,
+        horizontalArrangement = Arrangement.Center,
     )
     {
         var frontColor = MaterialTheme.colorScheme.onBackground
         if (data.current?.isDay == 0) {
-            frontColor = Color.Gray
+            frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Column(
@@ -149,36 +151,15 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                     .padding(20.dp)
                     .fillMaxWidth(0.5f),
                 verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.weight(0.4f))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "${data.current?.tempC} ",
-                        fontSize = 120.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.Light
-                    )
-                    Text(
-                        "°C",
-                        fontSize = 64.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.Light
-                    )
-                }
+                Spacer(modifier = Modifier.weight(0.2f))
+                LayoutTop(data = data)
                 Spacer(modifier = Modifier.weight(0.2f))
                 Text(
-                    "${data.current?.condition?.text}",
-                    fontSize = 32.sp,
-                )
-                Spacer(modifier = Modifier.weight(0.4f))
-                Text(
                     "Last updated: ${data.current?.lastUpdated}",
-                    fontSize = 18.sp,
+                    fontSize = 12.sp,
                 )
-
             }
             Column(
                 modifier = Modifier
@@ -187,14 +168,8 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
-                AsyncImage(
-                    model = iconUrl,
-                    contentDescription = "Landscape Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                )
+                LayoutBottom(data = data)
+                Spacer(modifier = Modifier.weight(0.3f))
             }
         }
     }
@@ -212,56 +187,67 @@ fun PortraitLayout(data: WeatherapiCurrent) {
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
         if (data.current?.isDay == 0) {
-            frontColor = Color.Gray
+            frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Spacer(modifier = Modifier.weight(0.2f))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "${data.current?.tempC} ",
-                    fontSize = 120.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.Light
-                )
-                Text(
-                    "°C",
-                    fontSize = 64.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    fontWeight = FontWeight.Light
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(0.1f))
-            Text(
-                "${data.current?.condition?.text}",
-                fontSize = 32.sp,
-            )
+            LayoutTop(data = data)
             Spacer(modifier = Modifier.weight(0.2f))
-            val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
-            AsyncImage(
-                model = iconUrl,
-                contentDescription = "Landscape Image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
+            LayoutBottom(data)
             Spacer(modifier = Modifier.weight(0.2f))
-
             Text(
                 "Last updated: ${data.current?.lastUpdated}",
                 fontSize = 12.sp,
             )
+
         }
-
-
     }
-
 }
 
 @Composable
-fun PortraitLayoutInside1(data: WeatherapiCurrent) {
+fun LayoutBottom(data: WeatherapiCurrent) {
+    val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
+    AsyncImage(
+        model = iconUrl,
+        contentDescription = "Landscape Image",
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+    )
+    if (data.current?.isDay == 1) {
+        Text(
+            "UV ${data.current?.uv?.roundToInt()}",
+            fontSize = 48.sp,
+        )
+    }
+}
 
+@Composable
+fun LayoutTop(data: WeatherapiCurrent) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "${data.current?.tempC} ",
+            fontSize = 142.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Light
+        )
+        Text(
+            "°C",
+            fontSize = 32.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Light
+        )
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "${data.current?.condition?.text}",
+            fontSize = 48.sp,
+            lineHeight = 48.sp,
+            fontWeight = FontWeight.Light
+        )
+    }
 }
