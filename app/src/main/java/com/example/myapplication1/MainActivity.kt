@@ -3,32 +3,40 @@ package com.example.myapplication1
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
 import com.example.myapplication1.dto.WeatherapiCurrent
 import io.ktor.client.HttpClient
@@ -65,6 +73,16 @@ class MainActivity : ComponentActivity() {
                     Configuration.ORIENTATION_LANDSCAPE -> data.value?.let { LandscapeLayout(it) }
                     else -> data.value?.let { PortraitLayout(it) } // Default to portrait if orientation is unknown
                 }
+
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+                val windowInsetsController =
+                    WindowCompat.getInsetsController(window, window.decorView)
+                windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
+                windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
+                // Configure the behavior of the hidden system bars.
+                windowInsetsController.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
         }
     }
@@ -118,48 +136,66 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceAround
+        horizontalArrangement = Arrangement.SpaceAround,
     )
     {
-        Column(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxWidth(0.5f),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "${data.current?.tempC} °C",
-                fontSize = 92.sp,
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                "${data.current?.condition?.text}",
-                fontSize = 32.sp
-            )
-            Text(
-                "Last updated: ${data.current?.lastUpdated}",
-                fontSize = 18.sp,
-            )
+        var frontColor = MaterialTheme.colorScheme.onBackground
+        if (data.current?.isDay == 0) {
+            frontColor = Color.Gray
         }
-        Column(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            AsyncImage(
-                model = "https:${data.current?.condition?.icon}",
-                contentDescription = "Landscape Image",
+        CompositionLocalProvider(LocalContentColor provides frontColor) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-            )
+                    .padding(20.dp)
+                    .fillMaxWidth(0.5f),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.Start
+            ) {
+                Spacer(modifier = Modifier.weight(0.4f))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${data.current?.tempC} ",
+                        fontSize = 120.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Light
+                    )
+                    Text(
+                        "°C",
+                        fontSize = 64.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Light
+                    )
+                }
+                Spacer(modifier = Modifier.weight(0.2f))
+                Text(
+                    "${data.current?.condition?.text}",
+                    fontSize = 32.sp,
+                )
+                Spacer(modifier = Modifier.weight(0.4f))
+                Text(
+                    "Last updated: ${data.current?.lastUpdated}",
+                    fontSize = 18.sp,
+                )
 
-
+            }
+            Column(
+                modifier = Modifier
+                    .padding(10.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
+                AsyncImage(
+                    model = iconUrl,
+                    contentDescription = "Landscape Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                )
+            }
         }
     }
 
@@ -170,33 +206,62 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
 fun PortraitLayout(data: WeatherapiCurrent) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceAround,
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
-        Text(
-            "${data.current?.tempC} °C",
-            fontSize = 92.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Bold
-        )
+        var frontColor = MaterialTheme.colorScheme.onBackground
+        if (data.current?.isDay == 0) {
+            frontColor = Color.Gray
+        }
+        CompositionLocalProvider(LocalContentColor provides frontColor) {
+            Spacer(modifier = Modifier.weight(0.2f))
 
-        Text(
-            "${data.current?.condition?.text}",
-            fontSize = 32.sp,
-        )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "${data.current?.tempC} ",
+                    fontSize = 120.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Light
+                )
+                Text(
+                    "°C",
+                    fontSize = 64.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Light
+                )
+            }
 
-        AsyncImage(
-            model = "https:${data.current?.condition?.icon}",
-            contentDescription = "Landscape Image",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-        )
+            Spacer(modifier = Modifier.weight(0.1f))
+            Text(
+                "${data.current?.condition?.text}",
+                fontSize = 32.sp,
+            )
+            Spacer(modifier = Modifier.weight(0.2f))
+            val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
+            AsyncImage(
+                model = iconUrl,
+                contentDescription = "Landscape Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+            )
+            Spacer(modifier = Modifier.weight(0.2f))
 
-        Text(
-            "Last updated: ${data.current?.lastUpdated}",
-            fontSize = 12.sp,
-        )
+            Text(
+                "Last updated: ${data.current?.lastUpdated}",
+                fontSize = 12.sp,
+            )
+        }
+
+
     }
+
+}
+
+@Composable
+fun PortraitLayoutInside1(data: WeatherapiCurrent) {
+
 }
