@@ -1,5 +1,5 @@
-package com.example.myapplication1
-import com.example.myapplication1.dto.WeatherapiCurrent
+package com.example.myapplication
+import com.example.myapplication.dto.WeatherapiCurrent
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android

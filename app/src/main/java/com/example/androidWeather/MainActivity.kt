@@ -1,4 +1,4 @@
-package com.example.myapplication1
+package com.example.androidWeather
 
 
 import android.content.res.Configuration
@@ -6,26 +6,9 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,19 +21,17 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
-import com.example.myapplication1.dto.WeatherapiCurrent
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.get
-import io.ktor.client.request.headers
-import io.ktor.client.request.parameter
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
+import com.example.androidWeather.dto.WeatherapiForecast
+import com.example.myapplication.dto.WeatherapiCurrent
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -62,10 +43,20 @@ class MainActivity : ComponentActivity() {
             MyApp {
                 val currentOrientation = LocalConfiguration.current.orientation
                 val data = remember { mutableStateOf<WeatherapiCurrent?>(null) }
+                val forecastData = remember { mutableStateOf<WeatherapiForecast?>(null) }
 
                 LaunchedEffect(Unit) {
                     while (true) {
                         fetchData(data)
+                        fetchForecastData(forecastData)
+                        val lastUpdated = data.value?.current?.lastUpdated
+//                        for (item in forecastData.value?.forecast?.forecastday?.get(0)?.hour!!) {
+//                            if (lastUpdated == item.time) {
+//                                println(item.time)
+//                                data.value!!.current?.uv = item.uv
+//                                data.value!!.current?.tempC = item.tempC
+//                            }
+//                        }
                         delay(15 * 60 * 1000)
                     }
                 }
@@ -91,6 +82,29 @@ class MainActivity : ComponentActivity() {
 
 }
 
+suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
+    val client = HttpClient(Android) {
+        install(ContentNegotiation) {
+            json()
+        }
+        defaultRequest {
+            headers {
+                contentType(ContentType.Application.Json)
+            }
+        }
+    }
+
+    val response: HttpResponse =
+        client.get("https://api.weatherapi.com/v1/forecast.json") {
+            parameter("key", "1c0a7e979c9c46da9dd112808242606")
+            parameter("q", "47.396,19.118")
+            parameter("days", 1)
+        }
+
+    data.value = response.body()
+    client.close()
+
+}
 
 suspend fun fetchData(data: MutableState<WeatherapiCurrent?>) {
     val client = HttpClient(Android) {
@@ -150,7 +164,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 modifier = Modifier
                     .padding(20.dp)
                     .fillMaxWidth(0.5f),
-                verticalArrangement = Arrangement.Bottom,
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.weight(0.2f))
@@ -168,6 +182,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Spacer(modifier = Modifier.weight(0.2f))
                 LayoutBottom(data = data)
                 Spacer(modifier = Modifier.weight(0.3f))
             }
@@ -181,7 +196,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
 fun PortraitLayout(data: WeatherapiCurrent) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.SpaceAround,
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
@@ -190,11 +205,11 @@ fun PortraitLayout(data: WeatherapiCurrent) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
-            Spacer(modifier = Modifier.weight(0.2f))
+            Spacer(modifier = Modifier.weight(0.1f))
             LayoutTop(data = data)
-            Spacer(modifier = Modifier.weight(0.2f))
+            Spacer(modifier = Modifier.weight(0.1f))
             LayoutBottom(data)
-            Spacer(modifier = Modifier.weight(0.2f))
+            Spacer(modifier = Modifier.weight(0.1f))
             Text(
                 "Last updated: ${data.current?.lastUpdated}",
                 fontSize = 12.sp,
@@ -209,37 +224,42 @@ fun LayoutBottom(data: WeatherapiCurrent) {
     val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
         model = iconUrl,
-        contentDescription = "Landscape Image",
+        contentDescription = "Weather Image",
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(256.dp)
     )
     if (data.current?.isDay == 1) {
         Text(
             "UV ${data.current?.uv?.roundToInt()}",
             fontSize = 48.sp,
+            fontWeight = FontWeight.Light
         )
     }
 }
 
 @Composable
 fun LayoutTop(data: WeatherapiCurrent) {
+    val intPart = data.current?.tempC?.toInt()
+    val fractionalPart = (intPart?.let { data.current?.tempC?.minus(it) })?.times(10)?.toInt()
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "${data.current?.tempC} ",
+            "${intPart} ",
             fontSize = 142.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Light
         )
         Text(
-            "°C",
-            fontSize = 32.sp,
+            ".${fractionalPart} °C",
+            fontSize = 48.sp,
             fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Light
+            fontWeight = FontWeight.Light,
         )
     }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -247,7 +267,8 @@ fun LayoutTop(data: WeatherapiCurrent) {
             "${data.current?.condition?.text}",
             fontSize = 48.sp,
             lineHeight = 48.sp,
-            fontWeight = FontWeight.Light
+            fontWeight = FontWeight.Light,
+            modifier = Modifier.padding(top = 24.dp)
         )
     }
 }

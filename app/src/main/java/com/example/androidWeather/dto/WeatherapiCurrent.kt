@@ -1,4 +1,4 @@
-package com.example.myapplication1.dto
+package com.example.myapplication.dto
 
 
 import kotlinx.serialization.SerialName
@@ -26,7 +26,6 @@ data class Location(
 
 @Serializable
 data class Condition(
-
     @SerialName("text") var text: String? = null,
     @SerialName("icon") var icon: String? = null,
     @SerialName("code") var code: Int? = null

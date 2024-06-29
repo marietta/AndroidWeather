@@ -1,4 +1,4 @@
-package com.example.myapplication1
+package com.example.androidWeather
 
 import org.junit.Test
 
