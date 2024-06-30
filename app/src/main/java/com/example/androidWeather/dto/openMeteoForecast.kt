@@ -1,7 +1,9 @@
 package com.example.androidWeather.dto
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 
 data class OpenMeteoForecast(
     @SerialName("latitude") var latitude: Double? = null,
@@ -10,7 +12,7 @@ data class OpenMeteoForecast(
     @SerialName("utc_offset_seconds") var utcOffsetSeconds: Int? = null,
     @SerialName("timezone") var timezone: String? = null,
     @SerialName("timezone_abbreviation") var timezoneAbbreviation: String? = null,
-    @SerialName("elevation") var elevation: Int? = null,
+    @SerialName("elevation") var elevation: Double? = null,
     @SerialName("current_units") var currentUnits: CurrentUnits? = CurrentUnits(),
     @SerialName("current") var current: Current? = Current(),
     @SerialName("minutely_15_units") var minutely15Units: Minutely15Units? = Minutely15Units(),
@@ -20,6 +22,7 @@ data class OpenMeteoForecast(
 
 )
 
+@Serializable
 data class CurrentUnits(
 
     @SerialName("time") var time: String? = null,
@@ -28,13 +31,17 @@ data class CurrentUnits(
 
 )
 
+@Serializable
+
 data class Current(
 
     @SerialName("time") var time: String? = null,
     @SerialName("interval") var interval: Int? = null,
-    @SerialName("temperature_2m") var temperature2m: Int? = null
+    @SerialName("temperature_2m") var temperature2m: Double? = null
 
 )
+
+@Serializable
 
 data class Minutely15Units(
 
@@ -43,12 +50,16 @@ data class Minutely15Units(
 
 )
 
+@Serializable
+
 data class Minutely15(
 
     @SerialName("time") var time: ArrayList<String> = arrayListOf(),
     @SerialName("temperature_2m") var temperature2m: ArrayList<Double> = arrayListOf()
 
 )
+
+@Serializable
 
 data class HourlyUnits(
 
@@ -58,10 +69,11 @@ data class HourlyUnits(
 
 )
 
+@Serializable
 
 data class Hourly(
 
-    @SerialName("time") var time: String? = null,
+    @SerialName("time") var time: ArrayList<String> = arrayListOf(),
     @SerialName("temperature_2m") var temperature2m: ArrayList<Double> = arrayListOf(),
     @SerialName("uv_index") var uvIndex: ArrayList<Double> = arrayListOf()
 

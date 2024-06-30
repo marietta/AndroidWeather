@@ -33,7 +33,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
 
 class MainActivity : ComponentActivity() {
@@ -54,9 +53,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 when (currentOrientation) {
-                    Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(forecastData,openMeteoForecastData)
-                    Configuration.ORIENTATION_LANDSCAPE -> LandscapeLayout(forecastData,openMeteoForecastData)
-                    else -> { PortraitLayout(forecastData, openMeteoForecastData) }
+                    Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(forecastData, openMeteoForecastData)
+                    Configuration.ORIENTATION_LANDSCAPE -> LandscapeLayout(forecastData, openMeteoForecastData)
+                    else -> {
+                        PortraitLayout(forecastData, openMeteoForecastData)
+                    }
                 } // Default to portrait if orientation is unknown
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -71,8 +72,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-
 }
 
 suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
@@ -93,10 +92,8 @@ suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
             parameter("q", "47.396,19.118")
             parameter("days", 1)
         }
-
     data.value = response.body()
     client.close()
-
 }
 
 suspend fun fetchOpenMeteoForecastData(data: MutableState<OpenMeteoForecast?>) {
@@ -120,7 +117,7 @@ suspend fun fetchOpenMeteoForecastData(data: MutableState<OpenMeteoForecast?>) {
 
 @Composable
 fun MyApp(content: @Composable () -> Unit) {
-    var useDarkTheme = true
+    val useDarkTheme = true
     MaterialTheme(
         colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
         content = {
@@ -158,7 +155,7 @@ fun LandscapeLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.weight(0.2f))
-                LayoutTop(data = data)
+                LayoutTop(data = data, data2 = data2.value)
                 Spacer(modifier = Modifier.weight(0.2f))
                 Text(
                     "Last updated: ${data.value?.current?.lastUpdated}",
@@ -171,9 +168,9 @@ fun LandscapeLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                Spacer(modifier = Modifier.weight(0.1f))
+                LayoutBottom(data = data.value, data2 = data2.value)
                 Spacer(modifier = Modifier.weight(0.2f))
-                LayoutBottom(data = data.value)
-                Spacer(modifier = Modifier.weight(0.3f))
             }
         }
     }
@@ -195,9 +192,9 @@ fun PortraitLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Spacer(modifier = Modifier.weight(0.1f))
-            LayoutTop(data = data)
+            LayoutTop(data = data, data2 = data2.value)
             Spacer(modifier = Modifier.weight(0.1f))
-            LayoutBottom(data.value)
+            LayoutBottom(data.value, data2.value)
             Spacer(modifier = Modifier.weight(0.1f))
             Text(
                 "Last updated: ${data.value?.current?.lastUpdated}",
@@ -209,7 +206,7 @@ fun PortraitLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<
 }
 
 @Composable
-fun LayoutBottom(data: WeatherapiForecast?) {
+fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
     val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
         model = iconUrl,
@@ -220,19 +217,21 @@ fun LayoutBottom(data: WeatherapiForecast?) {
     )
     if (data != null) {
         if (data.current?.isDay == 1) {
-            Text(
-                "UV ${data.current?.uv?.roundToInt()}",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Light
-            )
+            if (data2 != null) {
+                Text(
+                    "UV ${data2.hourly?.uvIndex?.first()}",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Light
+                )
+            }
         }
     }
 }
 
 @Composable
-fun LayoutTop(data: MutableState<WeatherapiForecast?>) {
-    val intPart = data.value?.current?.tempC?.toInt()
-    val fractionalPart = (intPart?.let { data.value!!.current?.tempC?.minus(it) })?.times(10)?.toInt()
+fun LayoutTop(data: MutableState<WeatherapiForecast?>, data2: OpenMeteoForecast?) {
+    val intPart = data2?.current?.temperature2m?.toInt()
+    val fractionalPart = (intPart?.let { data2.current!!.temperature2m?.minus(it) })?.times(10)?.toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
