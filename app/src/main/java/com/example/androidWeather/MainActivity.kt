@@ -21,8 +21,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
+import com.example.androidWeather.dto.OpenMeteoForecast
 import com.example.androidWeather.dto.WeatherapiForecast
-import com.example.myapplication.dto.WeatherapiCurrent
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.android.*
@@ -42,30 +42,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp {
                 val currentOrientation = LocalConfiguration.current.orientation
-                val data = remember { mutableStateOf<WeatherapiCurrent?>(null) }
                 val forecastData = remember { mutableStateOf<WeatherapiForecast?>(null) }
+                val openMeteoForecastData = remember { mutableStateOf<OpenMeteoForecast?>(null) }
 
                 LaunchedEffect(Unit) {
                     while (true) {
-                        fetchData(data)
+                        fetchOpenMeteoForecastData(openMeteoForecastData)
                         fetchForecastData(forecastData)
-                        val lastUpdated = data.value?.current?.lastUpdated
-//                        for (item in forecastData.value?.forecast?.forecastday?.get(0)?.hour!!) {
-//                            if (lastUpdated == item.time) {
-//                                println(item.time)
-//                                data.value!!.current?.uv = item.uv
-//                                data.value!!.current?.tempC = item.tempC
-//                            }
-//                        }
                         delay(15 * 60 * 1000)
                     }
                 }
 
                 when (currentOrientation) {
-                    Configuration.ORIENTATION_PORTRAIT -> data.value?.let { PortraitLayout(it) }
-                    Configuration.ORIENTATION_LANDSCAPE -> data.value?.let { LandscapeLayout(it) }
-                    else -> data.value?.let { PortraitLayout(it) } // Default to portrait if orientation is unknown
-                }
+                    Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(forecastData,openMeteoForecastData)
+                    Configuration.ORIENTATION_LANDSCAPE -> LandscapeLayout(forecastData,openMeteoForecastData)
+                    else -> { PortraitLayout(forecastData, openMeteoForecastData) }
+                } // Default to portrait if orientation is unknown
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
@@ -79,6 +71,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
 }
 
@@ -106,7 +99,7 @@ suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
 
 }
 
-suspend fun fetchData(data: MutableState<WeatherapiCurrent?>) {
+suspend fun fetchOpenMeteoForecastData(data: MutableState<OpenMeteoForecast?>) {
     val client = HttpClient(Android) {
         install(ContentNegotiation) {
             json()
@@ -115,15 +108,12 @@ suspend fun fetchData(data: MutableState<WeatherapiCurrent?>) {
             headers {
                 contentType(ContentType.Application.Json)
             }
-            // this: DefaultRequestBuilder
         }
     }
 
     val response: HttpResponse =
-        client.get("https://api.weatherapi.com/v1/current.json?q=Budapest") {
-            parameter("key", "1c0a7e979c9c46da9dd112808242606")
+        client.get("https://api.open-meteo.com/v1/forecast?latitude=47.4&longitude=19.12&current=temperature_2m&minutely_15=temperature_2m&hourly=temperature_2m,uv_index&timezone=Europe%2FBerlin&forecast_days=1&forecast_hours=1&forecast_minutely_15=4") {
         }
-
     data.value = response.body()
     client.close()
 }
@@ -148,7 +138,7 @@ fun MyApp(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun LandscapeLayout(data: WeatherapiCurrent) {
+fun LandscapeLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<OpenMeteoForecast?>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -156,7 +146,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
     )
     {
         var frontColor = MaterialTheme.colorScheme.onBackground
-        if (data.current?.isDay == 0) {
+        if (data.value?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
@@ -171,7 +161,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 LayoutTop(data = data)
                 Spacer(modifier = Modifier.weight(0.2f))
                 Text(
-                    "Last updated: ${data.current?.lastUpdated}",
+                    "Last updated: ${data.value?.current?.lastUpdated}",
                     fontSize = 12.sp,
                 )
             }
@@ -179,11 +169,10 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
                 modifier = Modifier
                     .padding(10.dp)
                     .fillMaxWidth(),
-                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(modifier = Modifier.weight(0.2f))
-                LayoutBottom(data = data)
+                LayoutBottom(data = data.value)
                 Spacer(modifier = Modifier.weight(0.3f))
             }
         }
@@ -193,7 +182,7 @@ fun LandscapeLayout(data: WeatherapiCurrent) {
 
 
 @Composable
-fun PortraitLayout(data: WeatherapiCurrent) {
+fun PortraitLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<OpenMeteoForecast?>) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceAround,
@@ -201,17 +190,17 @@ fun PortraitLayout(data: WeatherapiCurrent) {
 
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
-        if (data.current?.isDay == 0) {
+        if (data.value?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Spacer(modifier = Modifier.weight(0.1f))
             LayoutTop(data = data)
             Spacer(modifier = Modifier.weight(0.1f))
-            LayoutBottom(data)
+            LayoutBottom(data.value)
             Spacer(modifier = Modifier.weight(0.1f))
             Text(
-                "Last updated: ${data.current?.lastUpdated}",
+                "Last updated: ${data.value?.current?.lastUpdated}",
                 fontSize = 12.sp,
             )
 
@@ -220,8 +209,8 @@ fun PortraitLayout(data: WeatherapiCurrent) {
 }
 
 @Composable
-fun LayoutBottom(data: WeatherapiCurrent) {
-    val iconUrl = "https:${data.current?.condition?.icon}".replace("64x64", "128x128")
+fun LayoutBottom(data: WeatherapiForecast?) {
+    val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
         model = iconUrl,
         contentDescription = "Weather Image",
@@ -229,28 +218,31 @@ fun LayoutBottom(data: WeatherapiCurrent) {
             .fillMaxWidth()
             .height(256.dp)
     )
-    if (data.current?.isDay == 1) {
-        Text(
-            "UV ${data.current?.uv?.roundToInt()}",
-            fontSize = 48.sp,
-            fontWeight = FontWeight.Light
-        )
+    if (data != null) {
+        if (data.current?.isDay == 1) {
+            Text(
+                "UV ${data.current?.uv?.roundToInt()}",
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Light
+            )
+        }
     }
 }
 
 @Composable
-fun LayoutTop(data: WeatherapiCurrent) {
-    val intPart = data.current?.tempC?.toInt()
-    val fractionalPart = (intPart?.let { data.current?.tempC?.minus(it) })?.times(10)?.toInt()
+fun LayoutTop(data: MutableState<WeatherapiForecast?>) {
+    val intPart = data.value?.current?.tempC?.toInt()
+    val fractionalPart = (intPart?.let { data.value!!.current?.tempC?.minus(it) })?.times(10)?.toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Spacer(modifier = Modifier.weight(0.2f))
         Text(
             "${intPart} ",
             fontSize = 142.sp,
             fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Light
+            fontWeight = FontWeight.Light,
         )
         Text(
             ".${fractionalPart} °C",
@@ -258,13 +250,14 @@ fun LayoutTop(data: WeatherapiCurrent) {
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Light,
         )
+        Spacer(modifier = Modifier.weight(0.1f))
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "${data.current?.condition?.text}",
+            "${data.value?.current?.condition?.text}",
             fontSize = 48.sp,
             lineHeight = 48.sp,
             fontWeight = FontWeight.Light,
