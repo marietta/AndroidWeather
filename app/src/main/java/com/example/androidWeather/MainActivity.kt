@@ -6,9 +6,26 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,17 +38,20 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import coil.compose.AsyncImage
-import com.example.androidWeather.dto.OpenMeteoForecast
-import com.example.androidWeather.dto.WeatherapiForecast
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.android.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
+import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
 
 
@@ -53,8 +73,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 when (currentOrientation) {
-                    Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(forecastData, openMeteoForecastData)
-                    Configuration.ORIENTATION_LANDSCAPE -> LandscapeLayout(forecastData, openMeteoForecastData)
+                    Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(
+                        forecastData,
+                        openMeteoForecastData
+                    )
+
+                    Configuration.ORIENTATION_LANDSCAPE -> LandscapeLayout(
+                        forecastData,
+                        openMeteoForecastData
+                    )
+
                     else -> {
                         PortraitLayout(forecastData, openMeteoForecastData)
                     }
@@ -135,7 +163,10 @@ fun MyApp(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun LandscapeLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<OpenMeteoForecast?>) {
+fun LandscapeLayout(
+    data: MutableState<WeatherapiForecast?>,
+    data2: MutableState<OpenMeteoForecast?>
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -179,7 +210,10 @@ fun LandscapeLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState
 
 
 @Composable
-fun PortraitLayout(data: MutableState<WeatherapiForecast?>, data2: MutableState<OpenMeteoForecast?>) {
+fun PortraitLayout(
+    data: MutableState<WeatherapiForecast?>,
+    data2: MutableState<OpenMeteoForecast?>
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceAround,
@@ -231,14 +265,15 @@ fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
 @Composable
 fun LayoutTop(data: MutableState<WeatherapiForecast?>, data2: OpenMeteoForecast?) {
     val intPart = data2?.current?.temperature2m?.toInt()
-    val fractionalPart = (intPart?.let { data2.current!!.temperature2m?.minus(it) })?.times(10)?.toInt()
+    val fractionalPart =
+        (intPart?.let { data2.current!!.temperature2m?.minus(it) })?.times(10)?.toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Spacer(modifier = Modifier.weight(0.2f))
         Text(
-            "${intPart} ",
+            "$intPart ",
             fontSize = 142.sp,
             fontFamily = FontFamily.SansSerif,
             fontWeight = FontWeight.Light,

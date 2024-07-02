@@ -1,4 +1,4 @@
-package com.example.androidWeather.dto
+package com.example.androidWeather.dto.openMeteo
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
