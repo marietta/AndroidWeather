@@ -252,11 +252,24 @@ fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
     if (data != null) {
         if (data.current?.isDay == 1) {
             if (data2 != null) {
-                Text(
-                    "UV ${data2.hourly?.uvIndex?.first()}",
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Light
-                )
+                var fontWeight = FontWeight.Light
+                var color = Color.LightGray
+                val uv = data2.hourly?.uvIndex?.first()?.toDouble()
+                if (uv != null && uv >= 2) {
+                    if (uv > 5) {
+                        fontWeight = FontWeight.Bold
+                        color = Color(252, 174, 0)
+                    }
+                    if (uv > 7) {
+                        color = Color(252, 199, 60)
+                    }
+                    Text(
+                        "UV $uv",
+                        fontSize = 54.sp,
+                        fontWeight = fontWeight,
+                        color = color
+                    )
+                }
             }
         }
     }
