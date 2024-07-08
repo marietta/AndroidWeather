@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="AndroidWeather.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-07-06T08:47:35.935318441Z">
+        <DropdownSelection timestamp="2024-07-08T13:05:11.686290791Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=CB512EFAVL" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=LGH815a292a6d7" />
             </handle>
           </Target>
         </DropdownSelection>

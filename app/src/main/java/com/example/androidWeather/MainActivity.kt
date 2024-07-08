@@ -102,6 +102,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
     val client = HttpClient(Android) {
         install(ContentNegotiation) {
@@ -117,7 +118,7 @@ suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
     val response: HttpResponse =
         client.get("https://api.weatherapi.com/v1/forecast.json") {
             parameter("key", "1c0a7e979c9c46da9dd112808242606")
-            parameter("q", "47.396,19.118")
+            parameter("q", "47.395,19.123")
             parameter("days", 1)
         }
     data.value = response.body()
@@ -216,7 +217,7 @@ fun PortraitLayout(
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceAround,
+        verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
@@ -227,7 +228,6 @@ fun PortraitLayout(
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Spacer(modifier = Modifier.weight(0.1f))
             LayoutTop(data = data, data2 = data2.value)
-            Spacer(modifier = Modifier.weight(0.1f))
             LayoutBottom(data.value, data2.value)
             Spacer(modifier = Modifier.weight(0.1f))
             Text(
@@ -254,8 +254,13 @@ fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
             if (data2 != null) {
                 var fontWeight = FontWeight.Light
                 var color = Color.LightGray
+                var fontSize = 36.sp
                 val uv = data2.hourly?.uvIndex?.first()?.toDouble()
-                if (uv != null && uv >= 2) {
+                if (uv != null) {
+                    if (uv > 2) {
+                        fontWeight = FontWeight.Normal
+                        fontSize = 54.sp
+                    }
                     if (uv > 5) {
                         fontWeight = FontWeight.Bold
                         color = Color(252, 174, 0)
@@ -265,9 +270,10 @@ fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
                     }
                     Text(
                         "UV $uv",
-                        fontSize = 54.sp,
+                        fontSize = fontSize,
                         fontWeight = fontWeight,
-                        color = color
+                        color = color,
+                        modifier = Modifier.padding(top = 20.dp)
                     )
                 }
             }
@@ -277,9 +283,11 @@ fun LayoutBottom(data: WeatherapiForecast?, data2: OpenMeteoForecast?) {
 
 @Composable
 fun LayoutTop(data: MutableState<WeatherapiForecast?>, data2: OpenMeteoForecast?) {
-    val intPart = data2?.current?.temperature2m?.toInt()
+//    val intPart = data2?.current?.temperature2m?.toInt()
+    val tempC = data.value?.current?.tempC
+    val intPart = data.value?.current?.tempC?.toInt()
     val fractionalPart =
-        (intPart?.let { data2.current!!.temperature2m?.minus(it) })?.times(10)?.toInt()
+        (intPart?.let { tempC?.minus(it) })?.times(10)?.toInt()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
