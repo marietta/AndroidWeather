@@ -56,6 +56,8 @@ composeCompiler {
 }
 dependencies {
 
+    implementation(libs.kotlinx.coroutines.core)
+
     implementation(libs.coil.compose)
     implementation(libs.kotlinx.serialization.json)
     //    ktor

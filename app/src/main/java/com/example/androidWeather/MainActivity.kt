@@ -52,7 +52,11 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -65,12 +69,11 @@ class MainActivity : ComponentActivity() {
                 val openMeteoForecastData = remember { mutableStateOf<OpenMeteoForecast?>(null) }
 
                 LaunchedEffect(Unit) {
-                    while (true) {
-                        fetchOpenMeteoForecastData(openMeteoForecastData)
-                        fetchForecastData(forecastData)
-                        delay(15 * 60 * 1000)
-                    }
+                    fetchOpenMeteoForecastData(openMeteoForecastData)
+                    fetchForecastData(forecastData)
                 }
+
+                startRepeatingJob(forecastData, openMeteoForecastData)
 
                 when (currentOrientation) {
                     Configuration.ORIENTATION_PORTRAIT -> PortraitLayout(
@@ -102,6 +105,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun startRepeatingJob(
+    forecastData: MutableState<WeatherapiForecast?>,
+    openMeteoForecastData: MutableState<OpenMeteoForecast?>,
+    timeInterval: Long = 15 * 60 * 1000L
+): Job {
+    return CoroutineScope(Dispatchers.Default).launch {
+        while (true) {
+            delay(timeInterval)
+            fetchOpenMeteoForecastData(openMeteoForecastData)
+            fetchForecastData(forecastData)
+        }
+    }
+}
 
 suspend fun fetchForecastData(data: MutableState<WeatherapiForecast?>) {
     val client = HttpClient(Android) {
