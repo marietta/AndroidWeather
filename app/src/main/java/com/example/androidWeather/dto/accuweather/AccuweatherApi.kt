@@ -1,4 +1,4 @@
-package com.example.androidWeather.accuweatherApi
+package com.example.androidWeather.dto.accuweather
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
