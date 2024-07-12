@@ -16,6 +16,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -76,8 +77,7 @@ class Weatherapi : Api<WeatherapiForecast?> {
 class Accuweather : Api<AccuweatherApiItem?> {
     override val data = mutableStateOf<AccuweatherApiItem?>(null)
     override val url: String
-        get() = "https://dataservice.accuweather.com/currentconditions/v1/189894" +
-                "?apikey=ECcOavNTZp9XNXgGFwIcU4nAxLnOM0mA&details=true"
+        get() = "https://dataservice.accuweather.com/currentconditions/v1/189894?apikey=ECcOavNTZp9XNXgGFwIcU4nAxLnOM0mA"
 
     override val intervalInMinutes: Int
         get() = 12 * 60
@@ -87,16 +87,21 @@ class Accuweather : Api<AccuweatherApiItem?> {
         if (Date().after(nextFetch)) {
 
             val response = Api.ktorClient.get(url)
-            val expires = response.headers["Expires"]
-            Log.d("Accuweather", expires.toString())
+            Log.d("Accuweather", response.status.toString())
+            if (response.status == HttpStatusCode.OK) {
+                Log.d("Accuweather", response.headers.toString())
+                val expires = response.headers["Expires"]
 
-            val sdf = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)
-            sdf.timeZone = TimeZone.getTimeZone("GMT")
-            val expiredDate = sdf.parse(expires)
+                val sdf = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)
+                sdf.timeZone = TimeZone.getTimeZone("GMT")
+                val expiredDate = sdf.parse(expires)
+                Log.d("Accuweather", expiredDate.toString())
 
-            val value: List<AccuweatherApiItem> = response.body()
-            data.value = value.firstOrNull()
-            nextFetch = expiredDate
-        } else Log.d("Accuweather", "using cached")
+                val value: List<AccuweatherApiItem> = response.body()
+                data.value = value.firstOrNull()
+                nextFetch = expiredDate
+            }
+
+        } else Log.d("Accuweather", "using cached. Next fetch $nextFetch")
     }
 }

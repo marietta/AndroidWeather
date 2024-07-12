@@ -11,7 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -104,9 +105,9 @@ fun LandscapeLayout(
     data3: MutableState<AccuweatherApiItem?>,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.SpaceEvenly,
     )
     {
         var frontColor = MaterialTheme.colorScheme.onBackground
@@ -116,32 +117,29 @@ fun LandscapeLayout(
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Column(
                 modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth(0.5f),
-                verticalArrangement = Arrangement.Center,
+                    .fillMaxWidth(0.5f)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.weight(0.2f))
                 LayoutTop(data = data.value, data2 = data2.value, data3 = data3.value)
-                Spacer(modifier = Modifier.weight(0.2f))
-                Text(
-                    "Last updated: ${data.value?.current?.lastUpdated}",
-                    fontSize = 12.sp,
-                )
+                if (data.value != null) {
+                    Text(
+                        "Last updated: ${data.value?.current?.lastUpdated}",
+                        fontSize = 12.sp,
+                    )
+                }
             }
             Column(
                 modifier = Modifier
-                    .padding(10.dp)
-                    .fillMaxWidth(),
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.weight(0.1f))
                 LayoutBottom(data = data.value, data2 = data2.value)
-                Spacer(modifier = Modifier.weight(0.2f))
             }
         }
     }
-
 }
 
 
@@ -153,24 +151,22 @@ fun PortraitLayout(
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceAround,
+        verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally
-
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
         if (data.value?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
-            Spacer(modifier = Modifier.weight(0.1f))
             LayoutTop(data = data.value, data2 = data2.value, data3 = data3.value)
             LayoutBottom(data.value, data2.value)
-            Spacer(modifier = Modifier.weight(0.1f))
-            Text(
-                "Last updated: ${data.value?.current?.lastUpdated}",
-                fontSize = 12.sp,
-            )
-
+            if (data.value != null) {
+                Text(
+                    "Last updated: ${data.value?.current?.lastUpdated}",
+                    fontSize = 12.sp,
+                )
+            }
         }
     }
 }
@@ -187,43 +183,60 @@ fun LayoutTop(
         (intPart?.let { tempC?.minus(it) })?.times(10)?.toInt()
 
     Row {
-        Text(text = "accuw ${data3?.temperature?.metric?.value} ${data3?.weatherText}")
+        if (data3 != null) {
+            Text(
+                text = "accuw ${data3.temperature?.metric?.value} ${data3.weatherText}"
+            )
+        }
     }
     Row {
-        Text(text = "open-meteo ${data2?.current?.temperature2m} ")
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Spacer(modifier = Modifier.weight(0.2f))
-        Text(
-            "$intPart ",
-            fontSize = 142.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Light,
-        )
-        Text(
-            ".${fractionalPart} °C",
-            fontSize = 48.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Light,
-        )
-        Spacer(modifier = Modifier.weight(0.1f))
+        if (data2 != null) {
+            Text(text = "open-meteo ${data2.current?.temperature2m} ")
+        }
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "${data?.current?.condition?.text}",
-            fontSize = 48.sp,
-            lineHeight = 48.sp,
-            fontWeight = FontWeight.Light,
-            modifier = Modifier.padding(top = 24.dp)
-        )
+        if (data == null) {
+            Text(
+                text = "Loading...",
+                fontSize = 48.sp,
+            )
+        } else {
 
+
+            Text(
+                "$intPart ",
+                fontSize = 142.sp,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Light,
+            )
+            Text(
+                ".${fractionalPart} °C",
+                fontSize = 48.sp,
+                fontFamily = FontFamily.SansSerif,
+                fontWeight = FontWeight.Light,
+            )
+        }
     }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (data != null) {
+            Text(
+                "${data.current?.condition?.text}",
+                fontSize = 48.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Light,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+
 }
+
 
 @Composable
 fun LayoutBottom(
