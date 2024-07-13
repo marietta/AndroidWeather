@@ -2,7 +2,9 @@ package com.example.androidWeather
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.TimeZone
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
@@ -35,6 +37,7 @@ interface Api<T> {
             install(ContentNegotiation) {
                 json(Json {
                     allowStructuredMapKeys = true
+                    ignoreUnknownKeys = true
                 })
             }
             defaultRequest {
@@ -63,21 +66,25 @@ class OpenMeteo : Api<OpenMeteoForecast?> {
 
 class Weatherapi : Api<WeatherapiForecast?> {
     override val data = mutableStateOf<WeatherapiForecast?>(null)
+    private val apiKey = BuildConfig.WEATHERAPI_KEY
+
     override val url: String
-        get() = "https://api.weatherapi.com/v1/forecast.json?key=1c0a7e979c9c46da9dd112808242606" +
+        get() = "https://api.weatherapi.com/v1/forecast.json?key=${apiKey}" +
                 "&q=47.395,19.123&days=1"
 
     override suspend fun fetch() {
+        Log.d("Weatherapi", url)
         val response = Api.ktorClient.get(url)
         Log.d("Weatherapi", response.status.toString())
-        data.value = Api.ktorClient.get(url).body()
+        if (response.status.value == 200) data.value = Api.ktorClient.get(url).body()
     }
 }
 
 class Accuweather : Api<AccuweatherApiItem?> {
     override val data = mutableStateOf<AccuweatherApiItem?>(null)
+    private val apiKey = BuildConfig.ACCUWEATHER_KEY
     override val url: String
-        get() = "https://dataservice.accuweather.com/currentconditions/v1/189894?apikey=ECcOavNTZp9XNXgGFwIcU4nAxLnOM0mA"
+        get() = "https://dataservice.accuweather.com/currentconditions/v1/189894?apikey=${apiKey}"
 
     override val intervalInMinutes: Int
         get() = 12 * 60

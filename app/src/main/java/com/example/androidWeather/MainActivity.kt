@@ -1,6 +1,5 @@
 package com.example.androidWeather
 
-
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
@@ -8,20 +7,8 @@ import android.os.Looper
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -55,21 +42,15 @@ class MainActivity : ComponentActivity() {
                 val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
                 val accuweatherApiData = periodicFetch(handler, Accuweather())
 
-                if (orientation == Configuration.ORIENTATION_LANDSCAPE)
-                    LandscapeLayout(
-                        weatherapiForecastData,
-                        openMeteoForecastData,
-                        accuweatherApiData
-                    )
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(
+                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData
+                )
                 else PortraitLayout(
-                    weatherapiForecastData,
-                    openMeteoForecastData,
-                    accuweatherApiData
+                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData
                 )
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                val windowInsetsController =
-                    WindowCompat.getInsetsController(window, window.decorView)
+                val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
                 windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
                 windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
                 // Configure the behavior of the hidden system bars.
@@ -84,18 +65,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(content: @Composable () -> Unit) {
     val useDarkTheme = true
-    MaterialTheme(
-        colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
-        content = {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background,
-                contentColor = MaterialTheme.colorScheme.onBackground,
-            ) {
-                content()
-            }
+    MaterialTheme(colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(), content = {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+            contentColor = MaterialTheme.colorScheme.onBackground,
+        ) {
+            content()
         }
-    )
+    })
 }
 
 @Composable
@@ -108,17 +86,14 @@ fun LandscapeLayout(
         modifier = Modifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
-    )
-    {
+    ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
         if (data.value?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .fillMaxHeight(),
+                modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -131,8 +106,7 @@ fun LandscapeLayout(
                 }
             }
             Column(
-                modifier = Modifier
-                    .padding(10.dp),
+                modifier = Modifier.padding(10.dp),
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -173,25 +147,25 @@ fun PortraitLayout(
 
 @Composable
 fun LayoutTop(
-    data: WeatherapiForecast?,
-    data2: OpenMeteoForecast?,
-    data3: AccuweatherApiItem?
+    data: WeatherapiForecast?, data2: OpenMeteoForecast?, data3: AccuweatherApiItem?
 ) {
     val tempC = data?.current?.tempC
     val intPart = data?.current?.tempC?.toInt()
-    val fractionalPart =
-        (intPart?.let { tempC?.minus(it) })?.times(10)?.toInt()
-
-    Row {
+    val fractionalPart = (intPart?.let { tempC?.minus(it) })?.times(10)?.toInt()
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         if (data3 != null) {
-            Text(
-                text = "accuw ${data3.temperature?.metric?.value} ${data3.weatherText}"
-            )
+            Row {
+                Text(
+                    text = "accuw ${data3.temperature?.metric?.value} ${data3.weatherText}"
+                )
+            }
         }
-    }
-    Row {
         if (data2 != null) {
-            Text(text = "open-meteo ${data2.current?.temperature2m} ")
+            Row {
+                Text(text = "open-meteo ${data2.current?.temperature2m} ")
+            }
         }
     }
 
@@ -221,10 +195,10 @@ fun LayoutTop(
         }
     }
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (data != null) {
+    if (data != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 "${data.current?.condition?.text}",
                 fontSize = 48.sp,
@@ -234,7 +208,6 @@ fun LayoutTop(
             )
         }
     }
-
 }
 
 
@@ -245,11 +218,7 @@ fun LayoutBottom(
 ) {
     val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
-        model = iconUrl,
-        contentDescription = "Weather Image",
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(256.dp)
+        model = iconUrl, contentDescription = "Weather Image", modifier = Modifier.fillMaxWidth().height(256.dp)
     )
     if (data?.current?.isDay == 1) {
         var fontWeight = FontWeight.Light

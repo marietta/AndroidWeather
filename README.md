@@ -9,3 +9,7 @@ UV information.
 
 Made with WeatherAPI.com  
 ![](https://cdn.weatherapi.com/v4/images/weatherapi_logo.png)
+
+Made with Open-Meteo.com
+
+
