@@ -28,4 +28,13 @@ jobs:
       run: ./gradlew build --no-daemon
       
     - name: Build Debug APK
+      env:
+        ACCUWEATHER_KEY: ${{ secrets.ACCUWEATHER_KEY }}
+        WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
       run: ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-debug.apk
+        path: app/build/outputs/apk/debug/app-debug.apk
