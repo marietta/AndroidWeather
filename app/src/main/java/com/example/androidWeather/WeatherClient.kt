@@ -73,7 +73,6 @@ class Weatherapi : Api<WeatherapiForecast?> {
                 "&q=47.395,19.123&days=1"
 
     override suspend fun fetch() {
-        Log.d("Weatherapi", url)
         val response = Api.ktorClient.get(url)
         Log.d("Weatherapi", response.status.toString())
         if (response.status.value == 200) data.value = Api.ktorClient.get(url).body()

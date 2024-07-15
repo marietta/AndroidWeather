@@ -97,7 +97,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LayoutTop(data = data.value, data2 = data2.value, data3 = data3.value)
+                LayoutTop(weatherapiData = data.value, openMeteoData = data2.value, accuweatherData = data3.value)
                 if (data.value != null) {
                     Text(
                         "Last updated: ${data.value?.current?.lastUpdated}",
@@ -133,7 +133,7 @@ fun PortraitLayout(
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
-            LayoutTop(data = data.value, data2 = data2.value, data3 = data3.value)
+            LayoutTop(weatherapiData = data.value, openMeteoData = data2.value, accuweatherData = data3.value)
             LayoutBottom(data.value, data2.value)
             if (data.value != null) {
                 Text(
@@ -147,24 +147,24 @@ fun PortraitLayout(
 
 @Composable
 fun LayoutTop(
-    data: WeatherapiForecast?, data2: OpenMeteoForecast?, data3: AccuweatherApiItem?
+    weatherapiData: WeatherapiForecast?, openMeteoData: OpenMeteoForecast?, accuweatherData: AccuweatherApiItem?
 ) {
-    val tempC = data?.current?.tempC
-    val intPart = data?.current?.tempC?.toInt()
-    val fractionalPart = (intPart?.let { tempC?.minus(it) })?.times(10)?.toInt()
+    val temp = openMeteoData?.minutely15?.temperature2m?.first()
+    val intPart = temp?.toInt()
+    val fractionalPart = (intPart?.let { temp.minus(it) })?.times(10)?.toInt()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (data3 != null) {
+        if (accuweatherData != null) {
             Row {
                 Text(
-                    text = "accuw ${data3.temperature?.metric?.value} ${data3.weatherText}"
+                    text = "accuw ${accuweatherData.temperature?.metric?.value} ${accuweatherData.weatherText}"
                 )
             }
         }
-        if (data2 != null) {
+        if (weatherapiData != null) {
             Row {
-                Text(text = "open-meteo ${data2.current?.temperature2m} ")
+                Text(text = "weatherapi current: ${weatherapiData.current?.tempC} ")
             }
         }
     }
@@ -172,7 +172,7 @@ fun LayoutTop(
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (data == null) {
+        if (weatherapiData == null) {
             Text(
                 text = "Loading...",
                 fontSize = 48.sp,
@@ -195,12 +195,12 @@ fun LayoutTop(
         }
     }
 
-    if (data != null) {
+    if (weatherapiData != null) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "${data.current?.condition?.text}",
+                "${weatherapiData.current?.condition?.text}",
                 fontSize = 48.sp,
                 lineHeight = 48.sp,
                 fontWeight = FontWeight.Light,
