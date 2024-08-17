@@ -2,30 +2,28 @@ package com.example.androidWeather
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.TimeZone
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
 import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.request.get
-import io.ktor.client.request.headers
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 interface Api<T> {
+    val lat: Double
+        get() = 47.395
+    val lon: Double
+        get() = 19.123
     val url: String
     val intervalInMinutes: Int
         get() = 15
@@ -52,7 +50,7 @@ interface Api<T> {
 class OpenMeteo : Api<OpenMeteoForecast?> {
     override val data = mutableStateOf<OpenMeteoForecast?>(null)
     override val url: String
-        get() = "https://api.open-meteo.com/v1/forecast?latitude=47.395&longitude=19.123" +
+        get() = "https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}" +
                 "&current=temperature_2m&minutely_15=temperature_2m" +
                 "&hourly=temperature_2m,uv_index&timezone=Europe%2FBerlin&forecast_days=1" +
                 "&forecast_hours=1&forecast_minutely_15=4"
@@ -64,13 +62,27 @@ class OpenMeteo : Api<OpenMeteoForecast?> {
     }
 }
 
+class OpenWeather : Api<OpenMeteoForecast?> {
+    override val data = mutableStateOf<OpenMeteoForecast?>(null)
+    private val apiKey = BuildConfig.OPENWEATHER_KEY
+
+    override val url: String
+        get() = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}"
+
+    override suspend fun fetch() {
+        val response = Api.ktorClient.get(url)
+        Log.d("OpenWeather", response.status.toString())
+        if (response.status.value == 200) data.value = Api.ktorClient.get(url).body()
+    }
+}
+
 class Weatherapi : Api<WeatherapiForecast?> {
     override val data = mutableStateOf<WeatherapiForecast?>(null)
     private val apiKey = BuildConfig.WEATHERAPI_KEY
 
     override val url: String
         get() = "https://api.weatherapi.com/v1/forecast.json?key=${apiKey}" +
-                "&q=47.395,19.123&days=1"
+                "&q=${lat},${lon}&days=1"
 
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)

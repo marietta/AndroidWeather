@@ -7,8 +7,20 @@ import android.os.Looper
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -50,7 +62,8 @@ class MainActivity : ComponentActivity() {
                 )
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+                val windowInsetsController =
+                    WindowCompat.getInsetsController(window, window.decorView)
                 windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
                 windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
                 // Configure the behavior of the hidden system bars.
@@ -65,15 +78,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(content: @Composable () -> Unit) {
     val useDarkTheme = true
-    MaterialTheme(colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(), content = {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground,
-        ) {
-            content()
-        }
-    })
+    MaterialTheme(
+        colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
+        content = {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground,
+            ) {
+                content()
+            }
+        })
 }
 
 @Composable
@@ -93,11 +108,17 @@ fun LandscapeLayout(
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             Column(
-                modifier = Modifier.fillMaxWidth(0.5f).fillMaxHeight(),
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LayoutTop(weatherapiData = data.value, openMeteoData = data2.value, accuweatherData = data3.value)
+                LayoutTop(
+                    weatherapiData = data.value,
+                    openMeteoData = data2.value,
+                    accuweatherData = data3.value
+                )
                 if (data.value != null) {
                     Text(
                         "Last updated: ${data.value?.current?.lastUpdated}",
@@ -133,7 +154,11 @@ fun PortraitLayout(
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
-            LayoutTop(weatherapiData = data.value, openMeteoData = data2.value, accuweatherData = data3.value)
+            LayoutTop(
+                weatherapiData = data.value,
+                openMeteoData = data2.value,
+                accuweatherData = data3.value
+            )
             LayoutBottom(data.value, data2.value)
             if (data.value != null) {
                 Text(
@@ -147,7 +172,9 @@ fun PortraitLayout(
 
 @Composable
 fun LayoutTop(
-    weatherapiData: WeatherapiForecast?, openMeteoData: OpenMeteoForecast?, accuweatherData: AccuweatherApiItem?
+    weatherapiData: WeatherapiForecast?,
+    openMeteoData: OpenMeteoForecast?,
+    accuweatherData: AccuweatherApiItem?
 ) {
     val temp = openMeteoData?.minutely15?.temperature2m?.first()
     val intPart = temp?.toInt()
@@ -218,7 +245,11 @@ fun LayoutBottom(
 ) {
     val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
-        model = iconUrl, contentDescription = "Weather Image", modifier = Modifier.fillMaxWidth().height(256.dp)
+        model = iconUrl,
+        contentDescription = "Weather Image",
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(256.dp)
     )
     if (data?.current?.isDay == 1) {
         var fontWeight = FontWeight.Light

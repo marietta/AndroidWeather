@@ -27,6 +27,11 @@ android {
         )
         buildConfigField(
             "String",
+            "OPENWEATHER_KEY",
+            "\"${System.getenv("OPENWEATHER_KEY")}\""
+        )
+        buildConfigField(
+            "String",
             "ACCUWEATHER_KEY",
             "\"${System.getenv("ACCUWEATHER_KEY")}\""
         )
