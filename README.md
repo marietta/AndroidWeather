@@ -18,13 +18,13 @@ weatherapi.com
 open-meteo.com  
 <img src="https://i.imgur.com/qD93EtL.png" width="300"/>
 
-(planned) openweathermap.org  
+openweathermap.org  
 <img src="https://i.imgur.com/wLExitR.png" width="300"/>
 
 accuweather.com  
 <img src="https://i.imgur.com/bLIyIg9.png" width="300"/>
 
-(planned) wunderground.com  
+wunderground.com  
 <img src="https://i.imgur.com/Wui7HkH.png" width="300"/>
 
 

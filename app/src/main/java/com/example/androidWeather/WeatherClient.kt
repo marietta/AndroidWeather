@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
 import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
+import com.example.androidWeather.dto.wunderground.WundergroundData
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.android.*
@@ -17,6 +18,8 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import org.jsoup.Jsoup
+import java.lang.Math.round
 import java.util.*
 
 interface Api<T> {
@@ -58,7 +61,7 @@ class OpenMeteo : Api<OpenMeteoForecast?> {
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
         Log.d("OpenMeteoForecast", response.status.toString())
-        data.value = Api.ktorClient.get(url).body()
+        data.value = response.body()
     }
 }
 
@@ -72,7 +75,7 @@ class OpenWeather : Api<OpenMeteoForecast?> {
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
         Log.d("OpenWeather", response.status.toString())
-        if (response.status.value == 200) data.value = Api.ktorClient.get(url).body()
+        if (response.status.value == 200) data.value = response.body()
     }
 }
 
@@ -87,7 +90,7 @@ class Weatherapi : Api<WeatherapiForecast?> {
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
         Log.d("Weatherapi", response.status.toString())
-        if (response.status.value == 200) data.value = Api.ktorClient.get(url).body()
+        if (response.status.value == 200) data.value = response.body()
     }
 }
 
@@ -121,5 +124,32 @@ class Accuweather : Api<AccuweatherApiItem?> {
             }
 
         } else Log.d("Accuweather", "using cached. Next fetch $nextFetch")
+    }
+}
+
+class Wunderground : Api<WundergroundData?> {
+    override val data = mutableStateOf<WundergroundData?>(null)
+
+    override val url: String
+        get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP507&numericPrecision=decimal&format=json&units=m"
+    val url2: String
+        get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP576&numericPrecision=decimal&format=json&units=m"
+
+    override suspend fun fetch() {
+        var response1 = Api.ktorClient.get(url)
+        Log.d("Wunderground", response1.status.toString())
+        if (response1.status.value == 200) {
+            data.value = response1.body()
+        }
+
+        var response2 = Api.ktorClient.get(url2)
+        Log.d("Wunderground", response2.status.toString())
+        if (response2.status.value == 200) {
+            val apiResponse = Json.decodeFromString<WundergroundData>(response2.body())
+            val uvIndex = apiResponse.observations.firstOrNull()?.uv
+            if (uvIndex != null) {
+                data.value?.observations?.firstOrNull()?.uv = uvIndex
+            }
+        }
     }
 }

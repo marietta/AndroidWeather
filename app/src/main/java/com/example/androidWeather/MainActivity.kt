@@ -41,6 +41,7 @@ import coil.compose.AsyncImage
 import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
 import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
+import com.example.androidWeather.dto.wunderground.WundergroundData
 
 
 class MainActivity : ComponentActivity() {
@@ -53,12 +54,13 @@ class MainActivity : ComponentActivity() {
                 val weatherapiForecastData = periodicFetch(handler, Weatherapi())
                 val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
                 val accuweatherApiData = periodicFetch(handler, Accuweather())
+                val wunderData = periodicFetch(handler, Wunderground())
 
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(
-                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData
+                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData, wunderData
                 )
                 else PortraitLayout(
-                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData
+                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData, wunderData
                 )
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -96,6 +98,7 @@ fun LandscapeLayout(
     data: MutableState<WeatherapiForecast?>,
     data2: MutableState<OpenMeteoForecast?>,
     data3: MutableState<AccuweatherApiItem?>,
+    data4: MutableState<WundergroundData?>,
 ) {
     Row(
         modifier = Modifier.fillMaxSize(),
@@ -117,11 +120,12 @@ fun LandscapeLayout(
                 LayoutTop(
                     weatherapiData = data.value,
                     openMeteoData = data2.value,
-                    accuweatherData = data3.value
+                    accuweatherData = data3.value,
+                    wunderData = data4.value,
                 )
-                if (data.value != null) {
+                if (data4.value != null) {
                     Text(
-                        "Last updated: ${data.value?.current?.lastUpdated}",
+                        "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
                         fontSize = 12.sp,
                     )
                 }
@@ -131,7 +135,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LayoutBottom(data = data.value, data2 = data2.value)
+                LayoutBottom(data = data.value, data2 = data2.value, data4.value)
             }
         }
     }
@@ -143,6 +147,7 @@ fun PortraitLayout(
     data: MutableState<WeatherapiForecast?>,
     data2: MutableState<OpenMeteoForecast?>,
     data3: MutableState<AccuweatherApiItem?>,
+    data4: MutableState<WundergroundData?>,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -157,12 +162,13 @@ fun PortraitLayout(
             LayoutTop(
                 weatherapiData = data.value,
                 openMeteoData = data2.value,
-                accuweatherData = data3.value
+                accuweatherData = data3.value,
+                wunderData = data4.value,
             )
-            LayoutBottom(data.value, data2.value)
-            if (data.value != null) {
+            LayoutBottom(data.value, data2.value, data4.value)
+            if (data4.value != null) {
                 Text(
-                    "Last updated: ${data.value?.current?.lastUpdated}",
+                    "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
                     fontSize = 12.sp,
                 )
             }
@@ -174,39 +180,36 @@ fun PortraitLayout(
 fun LayoutTop(
     weatherapiData: WeatherapiForecast?,
     openMeteoData: OpenMeteoForecast?,
-    accuweatherData: AccuweatherApiItem?
+    accuweatherData: AccuweatherApiItem?,
+    wunderData: WundergroundData?,
 ) {
-    val temp = openMeteoData?.minutely15?.temperature2m?.first()
+    val temp = wunderData?.observations?.firstOrNull()?.metric?.temp
     val intPart = temp?.toInt()
-    val fractionalPart = (intPart?.let { temp.minus(it) })?.times(10)?.toInt()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (accuweatherData != null) {
-            Row {
-                Text(
-                    text = "accuw ${accuweatherData.temperature?.metric?.value} ${accuweatherData.weatherText}"
-                )
-            }
+        Row {
+            if (weatherapiData != null) {
+                Text(text = "weatherapi: ${weatherapiData.current?.tempC} ")
+            } else Text(text="")
+            if (openMeteoData != null) {
+                Text(text = "open-meteo: ${openMeteoData.current?.temperature2m} ")
+            } else Text(text="")
         }
-        if (weatherapiData != null) {
-            Row {
-                Text(text = "weatherapi current: ${weatherapiData.current?.tempC} ")
-            }
+        Row {
+            Text(text = "${wunderData?.observations?.firstOrNull()?.metric?.pressure?.toInt()} hPa")
         }
     }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (weatherapiData == null) {
+        if (wunderData == null) {
             Text(
                 text = "Loading...",
                 fontSize = 48.sp,
             )
         } else {
-
-
             Text(
                 "$intPart ",
                 fontSize = 142.sp,
@@ -214,7 +217,7 @@ fun LayoutTop(
                 fontWeight = FontWeight.Light,
             )
             Text(
-                ".${fractionalPart} °C",
+                "°C",
                 fontSize = 48.sp,
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Light,
@@ -242,6 +245,7 @@ fun LayoutTop(
 fun LayoutBottom(
     data: WeatherapiForecast?,
     data2: OpenMeteoForecast?,
+    data4: WundergroundData?,
 ) {
     val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
@@ -255,18 +259,19 @@ fun LayoutBottom(
         var fontWeight = FontWeight.Light
         var color = Color.LightGray
         var fontSize = 36.sp
-        val uv = data2?.hourly?.uvIndex?.first()?.toDouble()
+        val uv = data4?.observations?.firstOrNull()?.uv?.toInt()
         if (uv != null) {
-            if (uv > 2) {
+            if (uv >= 3) {
                 fontWeight = FontWeight.Normal
+                color = Color(255, 200, 0)
                 fontSize = 54.sp
             }
-            if (uv > 5) {
+            if (uv >= 6) {
                 fontWeight = FontWeight.Bold
                 color = Color(252, 174, 0)
             }
-            if (uv > 7) {
-                color = Color(252, 199, 60)
+            if (uv >= 8) {
+                color = Color(209, 57, 74)
             }
             Text(
                 "UV $uv",
