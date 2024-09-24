@@ -135,7 +135,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LayoutBottom(data = data.value, data2 = data2.value, data4.value)
+                LayoutBottom(data = data.value, data4.value)
             }
         }
     }
@@ -165,7 +165,7 @@ fun PortraitLayout(
                 accuweatherData = data3.value,
                 wunderData = data4.value,
             )
-            LayoutBottom(data.value, data2.value, data4.value)
+            LayoutBottom(data.value, data4.value)
             if (data4.value != null) {
                 Text(
                     "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
@@ -195,9 +195,6 @@ fun LayoutTop(
             if (openMeteoData != null) {
                 Text(text = "open-meteo: ${openMeteoData.current?.temperature2m} ")
             } else Text(text="")
-        }
-        Row {
-            Text(text = "${wunderData?.observations?.firstOrNull()?.metric?.pressure?.toInt()} hPa")
         }
     }
 
@@ -244,9 +241,11 @@ fun LayoutTop(
 @Composable
 fun LayoutBottom(
     data: WeatherapiForecast?,
-    data2: OpenMeteoForecast?,
-    data4: WundergroundData?,
+    wunderData: WundergroundData?,
 ) {
+
+    pressureSensorScreen(data?.current?.isDay)
+
     val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
     AsyncImage(
         model = iconUrl,
@@ -259,7 +258,7 @@ fun LayoutBottom(
         var fontWeight = FontWeight.Light
         var color = Color.LightGray
         var fontSize = 36.sp
-        val uv = data4?.observations?.firstOrNull()?.uv?.toInt()
+        val uv = wunderData?.observations?.firstOrNull()?.uv?.toInt()
         if (uv != null) {
             if (uv >= 3) {
                 fontWeight = FontWeight.Normal
