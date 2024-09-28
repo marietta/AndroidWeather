@@ -90,9 +90,9 @@ fun pressureSensorScreen(isDay: Int?) {
         val pressure = pressureValue.toInt()
         val iconId = when {
             pressure < 992 -> 308 // rain
-            pressure < 997 -> 293 // patchy rain
+            pressure < 996 -> 293 // patchy rain
             pressure < 1001 -> 119 // cloudy
-            pressure < 1006 -> 116 // partly cloudy
+            pressure < 1004 -> 116 // partly cloudy
             else -> 113 // clear
         }
         Text(text = "$pressure hPa")

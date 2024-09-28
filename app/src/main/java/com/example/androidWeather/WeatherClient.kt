@@ -18,8 +18,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import org.jsoup.Jsoup
-import java.lang.Math.round
 import java.util.*
 
 interface Api<T> {
@@ -135,6 +133,9 @@ class Wunderground : Api<WundergroundData?> {
     val url2: String
         get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP576&numericPrecision=decimal&format=json&units=m"
 
+    val observations : String
+        get() = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&geocodes=${lat},${lon}&language=en-US&units=m&format=json"
+
     override suspend fun fetch() {
         var response1 = Api.ktorClient.get(url)
         Log.d("Wunderground", response1.status.toString())
@@ -150,6 +151,12 @@ class Wunderground : Api<WundergroundData?> {
             if (uvIndex != null) {
                 data.value?.observations?.firstOrNull()?.uv = uvIndex
             }
+        }
+
+        var response3 = Api.ktorClient.get(observations)
+        if (response3.status.value == 200) {
+            Log.d("Wunderground wx", response2.status.toString())
+            data.value?.observationsCurrent = response3.body()
         }
     }
 }

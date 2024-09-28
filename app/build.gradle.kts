@@ -70,6 +70,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.material)
     implementation(libs.jsoup)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)

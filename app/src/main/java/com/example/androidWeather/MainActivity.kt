@@ -4,9 +4,11 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Air
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,12 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import coil.compose.AsyncImage
-import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
 import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
 import com.example.androidWeather.dto.wunderground.WundergroundData
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,14 +58,14 @@ class MainActivity : ComponentActivity() {
                 val handler = remember { Handler(Looper.getMainLooper()) }
                 val weatherapiForecastData = periodicFetch(handler, Weatherapi())
                 val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
-                val accuweatherApiData = periodicFetch(handler, Accuweather())
+//                val accuweatherApiData = periodicFetch(handler, Accuweather())
                 val wunderData = periodicFetch(handler, Wunderground())
 
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(
-                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData, wunderData
+                    weatherapiForecastData, openMeteoForecastData, wunderData
                 )
                 else PortraitLayout(
-                    weatherapiForecastData, openMeteoForecastData, accuweatherApiData, wunderData
+                    weatherapiForecastData, openMeteoForecastData, wunderData
                 )
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -97,7 +102,6 @@ fun MyApp(content: @Composable () -> Unit) {
 fun LandscapeLayout(
     data: MutableState<WeatherapiForecast?>,
     data2: MutableState<OpenMeteoForecast?>,
-    data3: MutableState<AccuweatherApiItem?>,
     data4: MutableState<WundergroundData?>,
 ) {
     Row(
@@ -120,7 +124,6 @@ fun LandscapeLayout(
                 LayoutTop(
                     weatherapiData = data.value,
                     openMeteoData = data2.value,
-                    accuweatherData = data3.value,
                     wunderData = data4.value,
                 )
                 if (data4.value != null) {
@@ -146,7 +149,6 @@ fun LandscapeLayout(
 fun PortraitLayout(
     data: MutableState<WeatherapiForecast?>,
     data2: MutableState<OpenMeteoForecast?>,
-    data3: MutableState<AccuweatherApiItem?>,
     data4: MutableState<WundergroundData?>,
 ) {
     Column(
@@ -162,7 +164,6 @@ fun PortraitLayout(
             LayoutTop(
                 weatherapiData = data.value,
                 openMeteoData = data2.value,
-                accuweatherData = data3.value,
                 wunderData = data4.value,
             )
             LayoutBottom(data.value, data4.value)
@@ -180,7 +181,6 @@ fun PortraitLayout(
 fun LayoutTop(
     weatherapiData: WeatherapiForecast?,
     openMeteoData: OpenMeteoForecast?,
-    accuweatherData: AccuweatherApiItem?,
     wunderData: WundergroundData?,
 ) {
     val temp = wunderData?.observations?.firstOrNull()?.metric?.temp
@@ -191,10 +191,10 @@ fun LayoutTop(
         Row {
             if (weatherapiData != null) {
                 Text(text = "weatherapi: ${weatherapiData.current?.tempC} ")
-            } else Text(text="")
+            } else Text(text = "")
             if (openMeteoData != null) {
                 Text(text = "open-meteo: ${openMeteoData.current?.temperature2m} ")
-            } else Text(text="")
+            } else Text(text = "")
         }
     }
 
@@ -222,12 +222,12 @@ fun LayoutTop(
         }
     }
 
-    if (weatherapiData != null) {
+    if (wunderData != null) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "${weatherapiData.current?.condition?.text}",
+                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
                 fontSize = 48.sp,
                 lineHeight = 48.sp,
                 fontWeight = FontWeight.Light,
@@ -243,17 +243,64 @@ fun LayoutBottom(
     data: WeatherapiForecast?,
     wunderData: WundergroundData?,
 ) {
+    if (wunderData != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            pressureSensorScreen(data?.current?.isDay)
+            Text(text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.cloudCoverPhrase.toString())
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val humid = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.relativeHumidity?.toInt()
+            Text(text = "${wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.relativeHumidity.toString()} % ")
+            Icon(
+                imageVector = Icons.Outlined.WaterDrop,
+                contentDescription = "Humid Icon",
+                modifier = Modifier.size(56.dp).padding(12.dp)
+            )
+            val humidText = when {
+                humid!! < 40 -> "Dry"
+                humid < 60 -> "Good"
+                humid < 80 -> "Humid" // patchy rain
+                else -> "Wet"
+            }
+            Text(text = humidText)
+        }
 
-    pressureSensorScreen(data?.current?.isDay)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
+            Text(text = "$windSpeed km/h")
+            Icon(
+                imageVector = Icons.Outlined.Air,
+                contentDescription = "Air Icon",
+                modifier = Modifier.size(64.dp).padding(12.dp)
+            )
+            val windText = when {
+                windSpeed == 0 -> "Still"
+                windSpeed!! < 10 -> "Light breeze" // rain
+                windSpeed < 20 -> "Windy" // patchy rain
+                else -> "Good" // clear
+            }
+            Text(text = windText)
 
-    val iconUrl = "https:${data?.current?.condition?.icon}".replace("64x64", "128x128")
-    AsyncImage(
-        model = iconUrl,
-        contentDescription = "Weather Image",
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(256.dp)
-    )
+        }
+
+        val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
+        val dayOrNight = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
+
+        Image(
+            painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
+            contentDescription = "Weather Image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(192.dp)
+        )
+    }
+
     if (data?.current?.isDay == 1) {
         var fontWeight = FontWeight.Light
         var color = Color.LightGray
@@ -280,5 +327,31 @@ fun LayoutBottom(
                 modifier = Modifier.padding(top = 20.dp)
             )
         }
+    }
+}
+
+fun getDrawableResourceId(iconCode: Int? = 30, dayOrNight: String? = "d"): Int {
+    return try {
+        // Construct the resource name based on the icon code
+        val resourceName = "im_${dayOrNight}_$iconCode"
+        Log.d("Wunderground wx", resourceName)
+        // Get the resource ID dynamically
+        val resId = R.drawable::class.java.getField(resourceName).getInt(null)
+        resId
+    } catch (_: Exception) {
+        R.drawable.im_d_28 // Fallback if not found
+    }
+}
+
+fun getDrawableResourceId(iconCode: String): Int {
+    return try {
+        // Construct the resource name based on the icon code
+        val resourceName = "im_$iconCode"
+        Log.d("Wunderground wx", resourceName)
+        // Get the resource ID dynamically
+        val resId = R.drawable::class.java.getField(resourceName).getInt(null)
+        resId
+    } catch (_: Exception) {
+        R.drawable.im_d_28 // Fallback if not found
     }
 }
