@@ -89,7 +89,7 @@ fun MyApp(content: @Composable () -> Unit) {
         colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
         content = {
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                 color = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
@@ -105,9 +105,10 @@ fun LandscapeLayout(
     data4: MutableState<WundergroundData?>,
 ) {
     Row(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth()
+            .fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.Start,
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
         if (data.value?.current?.isDay == 0) {
@@ -118,7 +119,7 @@ fun LandscapeLayout(
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
                     .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceAround,
+                verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LayoutTop(
@@ -134,11 +135,13 @@ fun LandscapeLayout(
                 }
             }
             Column(
-                modifier = Modifier.padding(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LayoutBottom(data = data.value, data4.value)
+                LayoutBottom(weatherapiData = data.value, wunderData = data4.value)
             }
         }
     }
@@ -183,20 +186,9 @@ fun LayoutTop(
     openMeteoData: OpenMeteoForecast?,
     wunderData: WundergroundData?,
 ) {
+
     val temp = wunderData?.observations?.firstOrNull()?.metric?.temp
     val intPart = temp?.toInt()
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Row {
-            if (weatherapiData != null) {
-                Text(text = "weatherapi: ${weatherapiData.current?.tempC} ")
-            } else Text(text = "")
-            if (openMeteoData != null) {
-                Text(text = "open-meteo: ${openMeteoData.current?.temperature2m} ")
-            } else Text(text = "")
-        }
-    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -226,6 +218,82 @@ fun LayoutTop(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
+            val dayOrNight =
+                wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
+
+            Image(
+                painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
+                contentDescription = "Weather Image",
+                modifier = Modifier
+                    .height(160.dp)
+            )
+        }
+
+    }
+}
+
+
+@Composable
+fun LayoutBottom(
+    weatherapiData: WeatherapiForecast?,
+    wunderData: WundergroundData?,
+) {
+    if (wunderData != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    pressureSensorScreen(weatherapiData?.current?.isDay)
+                    Text(text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.cloudCoverPhrase.toString())
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val humid = wunderData.observations.firstOrNull()?.humidity?.toInt()
+                    Text(text = "${humid.toString()} %", fontSize = 18.sp,)
+                    Icon(
+                        imageVector = Icons.Outlined.WaterDrop,
+                        contentDescription = "Humid Icon",
+                        modifier = Modifier.size(56.dp).padding(12.dp)
+                    )
+                    val humidText = when {
+                        humid!! < 40 -> "Dry"
+                        humid < 60 -> "Good"
+                        humid < 80 -> "Humid" // patchy rain
+                        else -> "Wet"
+                    }
+                    Text(text = humidText, fontSize = 18.sp,)
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
+                    Text(text = "$windSpeed km/h")
+                    Icon(
+                        imageVector = Icons.Outlined.Air,
+                        contentDescription = "Air Icon",
+                        modifier = Modifier.size(64.dp).padding(12.dp)
+                    )
+                    val windText = when {
+                        windSpeed == 0 -> "Still"
+                        windSpeed!! < 10 -> "Light breeze" // rain
+                        windSpeed < 20 -> "Windy" // patchy rain
+                        else -> "Strong Wind" // clear
+                    }
+                    Text(text = windText, fontSize = 18.sp,)
+                }
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
                 fontSize = 48.sp,
@@ -234,124 +302,49 @@ fun LayoutTop(
                 textAlign = TextAlign.Center
             )
         }
+
+        if (wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight == "D") {
+            var fontWeight = FontWeight.Light
+            var color = Color.LightGray
+            var fontSize = 36.sp
+            val uv = wunderData.observations.firstOrNull()?.uv?.toInt()
+            if (uv != null) {
+                if (uv >= 3) {
+                    fontWeight = FontWeight.Normal
+                    color = Color(255, 200, 0)
+                    fontSize = 54.sp
+                }
+                if (uv >= 6) {
+                    fontWeight = FontWeight.Bold
+                    color = Color(252, 174, 0)
+                }
+                if (uv >= 8) {
+                    color = Color(209, 57, 74)
+                }
+                Text(
+                    "UV $uv",
+                    fontSize = fontSize,
+                    fontWeight = fontWeight,
+                    color = color,
+                    modifier = Modifier.padding(top = 20.dp)
+                )
+            }
+        }
+
     }
 }
 
-
-@Composable
-fun LayoutBottom(
-    data: WeatherapiForecast?,
-    wunderData: WundergroundData?,
-) {
-    if (wunderData != null) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            pressureSensorScreen(data?.current?.isDay)
-            Text(text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.cloudCoverPhrase.toString())
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val humid = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.relativeHumidity?.toInt()
-            Text(text = "${wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.relativeHumidity.toString()} % ")
-            Icon(
-                imageVector = Icons.Outlined.WaterDrop,
-                contentDescription = "Humid Icon",
-                modifier = Modifier.size(56.dp).padding(12.dp)
-            )
-            val humidText = when {
-                humid!! < 40 -> "Dry"
-                humid < 60 -> "Good"
-                humid < 80 -> "Humid" // patchy rain
-                else -> "Wet"
-            }
-            Text(text = humidText)
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
-            Text(text = "$windSpeed km/h")
-            Icon(
-                imageVector = Icons.Outlined.Air,
-                contentDescription = "Air Icon",
-                modifier = Modifier.size(64.dp).padding(12.dp)
-            )
-            val windText = when {
-                windSpeed == 0 -> "Still"
-                windSpeed!! < 10 -> "Light breeze" // rain
-                windSpeed < 20 -> "Windy" // patchy rain
-                else -> "Good" // clear
-            }
-            Text(text = windText)
-
-        }
-
-        val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
-        val dayOrNight = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
-
-        Image(
-            painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
-            contentDescription = "Weather Image",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(192.dp)
-        )
-    }
-
-    if (data?.current?.isDay == 1) {
-        var fontWeight = FontWeight.Light
-        var color = Color.LightGray
-        var fontSize = 36.sp
-        val uv = wunderData?.observations?.firstOrNull()?.uv?.toInt()
-        if (uv != null) {
-            if (uv >= 3) {
-                fontWeight = FontWeight.Normal
-                color = Color(255, 200, 0)
-                fontSize = 54.sp
-            }
-            if (uv >= 6) {
-                fontWeight = FontWeight.Bold
-                color = Color(252, 174, 0)
-            }
-            if (uv >= 8) {
-                color = Color(209, 57, 74)
-            }
-            Text(
-                "UV $uv",
-                fontSize = fontSize,
-                fontWeight = fontWeight,
-                color = color,
-                modifier = Modifier.padding(top = 20.dp)
-            )
-        }
-    }
-}
 
 fun getDrawableResourceId(iconCode: Int? = 30, dayOrNight: String? = "d"): Int {
+    val resourceName = "im_${dayOrNight}_$iconCode"
     return try {
         // Construct the resource name based on the icon code
-        val resourceName = "im_${dayOrNight}_$iconCode"
         Log.d("Wunderground wx", resourceName)
         // Get the resource ID dynamically
         val resId = R.drawable::class.java.getField(resourceName).getInt(null)
         resId
     } catch (_: Exception) {
-        R.drawable.im_d_28 // Fallback if not found
-    }
-}
-
-fun getDrawableResourceId(iconCode: String): Int {
-    return try {
-        // Construct the resource name based on the icon code
-        val resourceName = "im_$iconCode"
-        Log.d("Wunderground wx", resourceName)
-        // Get the resource ID dynamically
-        val resId = R.drawable::class.java.getField(resourceName).getInt(null)
-        resId
-    } catch (_: Exception) {
+        Log.d("Wunderground wx", "Missing icon: $resourceName")
         R.drawable.im_d_28 // Fallback if not found
     }
 }
