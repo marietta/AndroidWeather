@@ -58,8 +58,9 @@ class OpenMeteo : Api<OpenMeteoForecast?> {
 
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
-        Log.d("OpenMeteoForecast", response.status.toString())
-        data.value = response.body()
+        if (response.status.value == 200) data.value = response.body()
+        else Log.d("OpenMeteoForecast", response.status.toString())
+
     }
 }
 
@@ -72,8 +73,8 @@ class OpenWeather : Api<OpenMeteoForecast?> {
 
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
-        Log.d("OpenWeather", response.status.toString())
         if (response.status.value == 200) data.value = response.body()
+        else Log.d("OpenWeather", response.status.toString())
     }
 }
 
@@ -87,8 +88,8 @@ class Weatherapi : Api<WeatherapiForecast?> {
 
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
-        Log.d("Weatherapi", response.status.toString())
         if (response.status.value == 200) data.value = response.body()
+        else Log.d("Weatherapi", response.status.toString())
     }
 }
 
@@ -133,30 +134,31 @@ class Wunderground : Api<WundergroundData?> {
     val url2: String
         get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP576&numericPrecision=decimal&format=json&units=m"
 
-    val observations : String
+    val observations: String
         get() = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&geocodes=${lat},${lon}&language=en-US&units=m&format=json"
 
     override suspend fun fetch() {
         var response1 = Api.ktorClient.get(url)
-        Log.d("Wunderground", response1.status.toString())
-        if (response1.status.value == 200) {
-            data.value = response1.body()
-        }
+        if (response1.status.value == 200) data.value = response1.body()
+        else Log.d("Wunderground", response1.status.toString())
+
 
         var response2 = Api.ktorClient.get(url2)
-        Log.d("Wunderground", response2.status.toString())
         if (response2.status.value == 200) {
             val apiResponse = Json.decodeFromString<WundergroundData>(response2.body())
             val uvIndex = apiResponse.observations.firstOrNull()?.uv
             if (uvIndex != null) {
                 data.value?.observations?.firstOrNull()?.uv = uvIndex
+            } else {
+                Log.d("Wunderground", response2.status.toString())
             }
         }
 
         var response3 = Api.ktorClient.get(observations)
         if (response3.status.value == 200) {
-            Log.d("Wunderground wx", response2.status.toString())
             data.value?.observationsCurrent = response3.body()
+        } else {
+            Log.d("Wunderground wx", response2.status.toString())
         }
     }
 }

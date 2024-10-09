@@ -97,7 +97,9 @@ fun pressureSensorScreen(isDay: Int?) {
         }
         Text(text = "$pressure hPa")
         var day = "day"
-        if (isDay != 1) {day = "night"}
+        if (isDay != 1) {
+            day = "night"
+        }
 
         AsyncImage(
             model = "https://cdn.weatherapi.com/weather/64x64/$day/$iconId.png",

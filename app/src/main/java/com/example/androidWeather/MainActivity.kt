@@ -119,7 +119,7 @@ fun LandscapeLayout(
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
                     .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LayoutTop(
@@ -218,18 +218,14 @@ fun LayoutTop(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
-            val dayOrNight =
-                wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
-
-            Image(
-                painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
-                contentDescription = "Weather Image",
-                modifier = Modifier
-                    .height(160.dp)
+            Text(
+                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
+                fontSize = 48.sp,
+                lineHeight = 48.sp,
+                fontWeight = FontWeight.Light,
+                textAlign = TextAlign.Center
             )
         }
-
     }
 }
 
@@ -256,7 +252,7 @@ fun LayoutBottom(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val humid = wunderData.observations.firstOrNull()?.humidity?.toInt()
-                    Text(text = "${humid.toString()} %", fontSize = 18.sp,)
+                    Text(text = "${humid.toString()} %", fontSize = 18.sp)
                     Icon(
                         imageVector = Icons.Outlined.WaterDrop,
                         contentDescription = "Humid Icon",
@@ -268,7 +264,7 @@ fun LayoutBottom(
                         humid < 80 -> "Humid" // patchy rain
                         else -> "Wet"
                     }
-                    Text(text = humidText, fontSize = 18.sp,)
+                    Text(text = humidText, fontSize = 18.sp)
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -286,7 +282,7 @@ fun LayoutBottom(
                         windSpeed < 20 -> "Windy" // patchy rain
                         else -> "Strong Wind" // clear
                     }
-                    Text(text = windText, fontSize = 18.sp,)
+                    Text(text = windText, fontSize = 18.sp)
                 }
             }
         }
@@ -294,12 +290,15 @@ fun LayoutBottom(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
-                fontSize = 48.sp,
-                lineHeight = 48.sp,
-                fontWeight = FontWeight.Light,
-                textAlign = TextAlign.Center
+            val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
+            val dayOrNight =
+                wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
+
+            Image(
+                painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
+                contentDescription = "Weather Image",
+                modifier = Modifier
+                    .height(160.dp)
             )
         }
 
