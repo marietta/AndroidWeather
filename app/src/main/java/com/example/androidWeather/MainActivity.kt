@@ -269,6 +269,18 @@ fun LayoutBottom(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val dewpt = wunderData.observations.firstOrNull()?.metric?.dewpt?.toInt()
+                    Text(text = "Dew point", fontSize = 18.sp)
+                    Icon(
+                        painter = painterResource(id = R.drawable.dew_point_24dp),
+                        contentDescription = "Humid Icon",
+                        modifier = Modifier.size(56.dp).padding(12.dp)
+                    )
+                    Text(text = "${dewpt.toString()} °C", fontSize = 18.sp)
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
                     Text(text = "$windSpeed km/h")
                     Icon(
