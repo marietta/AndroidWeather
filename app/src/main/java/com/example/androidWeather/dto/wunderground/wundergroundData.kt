@@ -77,7 +77,7 @@ data class ObservationsCurrent(
     val sunsetTimeLocal: String,
     val sunsetTimeUtc: Long,
     val temperature: Int,
-    val temperatureChange24Hour: Int,
+    val temperatureChange24Hour: Int? = null,
     val temperatureDewPoint: Int,
     val temperatureFeelsLike: Int,
     val temperatureHeatIndex: Int,
