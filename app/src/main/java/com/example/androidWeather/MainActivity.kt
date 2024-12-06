@@ -246,7 +246,6 @@ fun LayoutBottom(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     pressureSensorScreen(weatherapiData?.current?.isDay)
-                    Text(text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.cloudCoverPhrase.toString())
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -350,7 +349,6 @@ fun getDrawableResourceId(iconCode: Int? = 30, dayOrNight: String? = "d"): Int {
     val resourceName = "im_${dayOrNight}_$iconCode"
     return try {
         // Construct the resource name based on the icon code
-        Log.d("Wunderground wx", resourceName)
         // Get the resource ID dynamically
         val resId = R.drawable::class.java.getField(resourceName).getInt(null)
         resId

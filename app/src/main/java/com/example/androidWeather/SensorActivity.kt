@@ -1,20 +1,29 @@
 package com.example.androidWeather
 
 import android.content.Context
+import android.graphics.drawable.Icon
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cyclone
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 object SensorManagerSingleton {
@@ -71,7 +80,7 @@ fun pressureSensorScreen(isDay: Int?) {
 
         coroutineScope.launch {
             while (true) {
-                delay(60000) // Wait for 1 minute (60,000 milliseconds)
+                delay(20000) // Wait for 1 minute (60,000 milliseconds)
                 // Optionally, you can re-register or perform any other action here if needed.
                 // For example, you might want to log or process the pressure value.
             }
@@ -88,24 +97,23 @@ fun pressureSensorScreen(isDay: Int?) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val pressure = pressureValue.toInt()
-        val iconId = when {
-            pressure < 992 -> 308 // rain
-            pressure < 996 -> 293 // patchy rain
-            pressure < 1001 -> 119 // cloudy
-            pressure < 1004 -> 116 // partly cloudy
-            else -> 113 // clear
-        }
         Text(text = "$pressure hPa")
-        var day = "day"
-        if (isDay != 1) {
-            day = "night"
-        }
+        Icon(
+            painter = painterResource(id = R.drawable.cyclone_48px),
+            contentDescription = "Pressure Icon",
+            modifier = Modifier.size(56.dp).padding(12.dp)
+            )
 
-        AsyncImage(
-            model = "https://cdn.weatherapi.com/weather/64x64/$day/$iconId.png",
-            contentDescription = "Weather Image",
-            modifier = Modifier.height(64.dp)
-        )
+        val ptext = when {
+            pressure < 990 -> "storm and chaos"
+            pressure < 996 -> "wet and windy bleh"
+            pressure < 1001 -> "clouds and sun"
+            pressure < 1030 -> "calm and clear"
+            else -> "danger of drought"
+        }
+        Text(text = ptext)
+
+
     }
 }
 
