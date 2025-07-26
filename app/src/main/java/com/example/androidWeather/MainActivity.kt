@@ -9,25 +9,11 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.WaterDrop
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -55,6 +41,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp {
                 val orientation = LocalConfiguration.current.orientation
+                Log.d("debug", orientation.toString())
+
                 val handler = remember { Handler(Looper.getMainLooper()) }
                 val weatherapiForecastData = periodicFetch(handler, Weatherapi())
                 val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
@@ -245,7 +233,7 @@ fun LayoutBottom(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    pressureSensorScreen(weatherapiData?.current?.isDay)
+                    PressureSensorScreen1(weatherapiData?.current?.isDay)
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

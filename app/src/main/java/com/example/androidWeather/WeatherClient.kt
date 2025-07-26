@@ -88,8 +88,10 @@ class Weatherapi : Api<WeatherapiForecast?> {
 
     override suspend fun fetch() {
         val response = Api.ktorClient.get(url)
-        if (response.status.value == 200) data.value = response.body()
-        else Log.d("Weatherapi", response.status.toString())
+        if (response.status.value == 200) {
+            // Log.d("Weatherapi", response.body())
+            data.value = response.body()
+        } else Log.d("Weatherapi", response.status.toString())
     }
 }
 
@@ -138,13 +140,13 @@ class Wunderground : Api<WundergroundData?> {
         get() = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&geocodes=${lat},${lon}&language=en-US&units=m&format=json"
 
     override suspend fun fetch() {
-        var response1 = Api.ktorClient.get(url)
+        val response1 = Api.ktorClient.get(url)
         if (response1.status.value == 200) data.value = response1.body()
         else Log.d("Wunderground", response1.status.toString())
 
-
-        var response2 = Api.ktorClient.get(url2)
+        val response2 = Api.ktorClient.get(url2)
         if (response2.status.value == 200) {
+            if (response1.status.value == 204) data.value = response2.body()
             val apiResponse = Json.decodeFromString<WundergroundData>(response2.body())
             val uvIndex = apiResponse.observations.firstOrNull()?.uv
             if (uvIndex != null) {
@@ -154,7 +156,7 @@ class Wunderground : Api<WundergroundData?> {
             }
         }
 
-        var response3 = Api.ktorClient.get(observations)
+        val response3 = Api.ktorClient.get(observations)
         if (response3.status.value == 200) {
             data.value?.observationsCurrent = response3.body()
         } else {
