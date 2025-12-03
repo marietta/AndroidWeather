@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PressureSensorScreen1(isDay: Int?) {
+fun PressureSensorScreen1() {
     val context = LocalContext.current
     var pressureValue by remember { mutableStateOf<Float?>(null) }
 
@@ -50,7 +50,7 @@ fun PressureSensorScreen1(isDay: Int?) {
         Icon(
             painter = painterResource(id = R.drawable.cyclone_48px),
             contentDescription = "Pressure Icon",
-            modifier = Modifier.size(56.dp).padding(12.dp)
+            modifier = Modifier.size(56.dp).padding(6.dp)
         )
 
         val ptext = when {

@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
 import com.example.androidWeather.dto.wunderground.WundergroundData
 
@@ -45,15 +44,15 @@ class MainActivity : ComponentActivity() {
 
                 val handler = remember { Handler(Looper.getMainLooper()) }
                 val weatherapiForecastData = periodicFetch(handler, Weatherapi())
-                val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
+                //val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
 //                val accuweatherApiData = periodicFetch(handler, Accuweather())
                 val wunderData = periodicFetch(handler, Wunderground())
 
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(
-                    weatherapiForecastData, openMeteoForecastData, wunderData
+                    weatherapiForecastData, wunderData
                 )
                 else PortraitLayout(
-                    weatherapiForecastData, openMeteoForecastData, wunderData
+                    weatherapiForecastData, wunderData
                 )
 
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -89,7 +88,6 @@ fun MyApp(content: @Composable () -> Unit) {
 @Composable
 fun LandscapeLayout(
     data: MutableState<WeatherapiForecast?>,
-    data2: MutableState<OpenMeteoForecast?>,
     data4: MutableState<WundergroundData?>,
 ) {
     Row(
@@ -111,8 +109,6 @@ fun LandscapeLayout(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LayoutTop(
-                    weatherapiData = data.value,
-                    openMeteoData = data2.value,
                     wunderData = data4.value,
                 )
                 if (data4.value != null) {
@@ -129,7 +125,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LayoutBottom(weatherapiData = data.value, wunderData = data4.value)
+                LayoutBottom(wunderData = data4.value)
             }
         }
     }
@@ -139,7 +135,6 @@ fun LandscapeLayout(
 @Composable
 fun PortraitLayout(
     data: MutableState<WeatherapiForecast?>,
-    data2: MutableState<OpenMeteoForecast?>,
     data4: MutableState<WundergroundData?>,
 ) {
     Column(
@@ -153,11 +148,9 @@ fun PortraitLayout(
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             LayoutTop(
-                weatherapiData = data.value,
-                openMeteoData = data2.value,
                 wunderData = data4.value,
             )
-            LayoutBottom(data.value, data4.value)
+            LayoutBottom(data4.value)
             if (data4.value != null) {
                 Text(
                     "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
@@ -170,8 +163,6 @@ fun PortraitLayout(
 
 @Composable
 fun LayoutTop(
-    weatherapiData: WeatherapiForecast?,
-    openMeteoData: OpenMeteoForecast?,
     wunderData: WundergroundData?,
 ) {
 
@@ -220,7 +211,6 @@ fun LayoutTop(
 
 @Composable
 fun LayoutBottom(
-    weatherapiData: WeatherapiForecast?,
     wunderData: WundergroundData?,
 ) {
     if (wunderData != null) {
@@ -233,7 +223,7 @@ fun LayoutBottom(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PressureSensorScreen1(weatherapiData?.current?.isDay)
+                    PressureSensorScreen1()
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -243,7 +233,7 @@ fun LayoutBottom(
                     Icon(
                         imageVector = Icons.Outlined.WaterDrop,
                         contentDescription = "Humid Icon",
-                        modifier = Modifier.size(56.dp).padding(12.dp)
+                        modifier = Modifier.size(56.dp).padding(6.dp)
                     )
                     val humidText = when {
                         humid!! < 40 -> "Dry"
@@ -261,7 +251,7 @@ fun LayoutBottom(
                     Icon(
                         painter = painterResource(id = R.drawable.dew_point_24dp),
                         contentDescription = "Humid Icon",
-                        modifier = Modifier.size(56.dp).padding(12.dp)
+                        modifier = Modifier.size(56.dp).padding(6.dp)
                     )
                     Text(text = "${dewpt.toString()} °C", fontSize = 18.sp)
                 }
@@ -273,7 +263,7 @@ fun LayoutBottom(
                     Icon(
                         imageVector = Icons.Outlined.Air,
                         contentDescription = "Air Icon",
-                        modifier = Modifier.size(64.dp).padding(12.dp)
+                        modifier = Modifier.size(64.dp).padding(6.dp)
                     )
                     val windText = when {
                         windSpeed == 0 -> "Still"
@@ -297,7 +287,7 @@ fun LayoutBottom(
                 painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
                 contentDescription = "Weather Image",
                 modifier = Modifier
-                    .height(160.dp)
+                    .height(100.dp)
             )
         }
 
@@ -324,7 +314,7 @@ fun LayoutBottom(
                     fontSize = fontSize,
                     fontWeight = fontWeight,
                     color = color,
-                    modifier = Modifier.padding(top = 20.dp)
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }

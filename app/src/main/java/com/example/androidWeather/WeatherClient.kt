@@ -12,11 +12,13 @@ import com.example.androidWeather.dto.wunderground.WundergroundData
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.android.*
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import java.util.*
 
@@ -27,7 +29,7 @@ interface Api<T> {
         get() = 19.123
     val url: String
     val intervalInMinutes: Int
-        get() = 15
+        get() = 10
     val data: MutableState<T>
     suspend fun fetch()
 
@@ -87,11 +89,17 @@ class Weatherapi : Api<WeatherapiForecast?> {
                 "&q=${lat},${lon}&days=1"
 
     override suspend fun fetch() {
-        val response = Api.ktorClient.get(url)
-        if (response.status.value == 200) {
-            // Log.d("Weatherapi", response.body())
-            data.value = response.body()
-        } else Log.d("Weatherapi", response.status.toString())
+        try {
+            val response = Api.ktorClient.get(url)
+            Log.d("Weatherapi", response.status.toString())
+            if (response.status.value == 200) {
+                data.value = response.body()
+            }
+        } catch (e: ConnectTimeoutException) {
+            delay(2000L)
+        } catch (e: Exception) {
+            Log.e("Weatherapi", "unexpected error", e)
+        }
     }
 }
 
@@ -140,19 +148,20 @@ class Wunderground : Api<WundergroundData?> {
         get() = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&geocodes=${lat},${lon}&language=en-US&units=m&format=json"
 
     override suspend fun fetch() {
-        val response1 = Api.ktorClient.get(url)
-        if (response1.status.value == 200) data.value = response1.body()
-        else Log.d("Wunderground", response1.status.toString())
+//        val response1 = Api.ktorClient.get(url)
+//        if (response1.status.value == 200) data.value = response1.body()
+//        else Log.d("Wunderground", "IBUDAP507 "+response1.status.toString())
 
         val response2 = Api.ktorClient.get(url2)
         if (response2.status.value == 200) {
-            if (response1.status.value == 204) data.value = response2.body()
+//            if (response1.status.value == 204)
+            data.value = response2.body()
             val apiResponse = Json.decodeFromString<WundergroundData>(response2.body())
             val uvIndex = apiResponse.observations.firstOrNull()?.uv
             if (uvIndex != null) {
                 data.value?.observations?.firstOrNull()?.uv = uvIndex
             } else {
-                Log.d("Wunderground", response2.status.toString())
+                Log.d("Wunderground", "IBUDAP603 "+response2.status.toString())
             }
         }
 
