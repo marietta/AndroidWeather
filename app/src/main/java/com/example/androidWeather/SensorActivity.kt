@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PressureSensorScreen1() {
+fun PressureSensorDisplay() {
     val context = LocalContext.current
     var pressureValue by remember { mutableStateOf<Float?>(null) }
 
@@ -54,6 +54,7 @@ fun PressureSensorScreen1() {
         )
 
         val ptext = when {
+            pressure == 0 -> "no data"
             pressure < 990 -> "storm and chaos"
             pressure < 996 -> "wet and windy bleh"
             pressure < 1001 -> "clouds and sun"

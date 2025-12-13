@@ -1,23 +1,26 @@
 package com.example.androidWeather
 
-import android.os.Handler
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
-import kotlinx.coroutines.runBlocking
+import android.content.Context
+import androidx.work.*
+import java.util.concurrent.TimeUnit
 
 
-@Composable
-inline fun <reified T> periodicFetch(handler: Handler, api: Api<T>): MutableState<T> {
-    LaunchedEffect(Unit) {
-        val runnable = object : Runnable {
-            override fun run() {
-                runBlocking { api.fetch() }
-                handler.postDelayed(this, api.intervalInMinutes * 60 * 1000L)
-            }
-        }
-        handler.post(runnable)
-    }
-    return remember { api.data }
+fun enqueuePeriodicFetch(context: Context, apiType: String, intervalInMinutes: Long) {
+    val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+    val workRequest = PeriodicWorkRequestBuilder<WeatherWorker>(
+        repeatInterval = intervalInMinutes,
+        repeatIntervalTimeUnit = TimeUnit.MINUTES
+    )
+        .setConstraints(constraints)
+        .setInputData(workDataOf(WeatherWorker.API_TYPE_KEY to apiType))
+        .build()
+
+    WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+        "${apiType}_fetch_work",
+        ExistingPeriodicWorkPolicy.UPDATE,
+        workRequest
+    )
 }

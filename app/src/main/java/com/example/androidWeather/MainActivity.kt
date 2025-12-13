@@ -2,9 +2,6 @@ package com.example.androidWeather
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,10 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,36 +26,38 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
+import com.example.androidWeather.ui.WeatherUiState
+import com.example.androidWeather.ui.WeatherViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import android.util.Log
 import com.example.androidWeather.dto.wunderground.WundergroundData
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Schedule background work once at startup
+        enqueuePeriodicFetch(applicationContext, WeatherWorker.WEATHERAPI_TYPE, 10L)
+        enqueuePeriodicFetch(applicationContext, WeatherWorker.WUNDERGROUND_TYPE, 10L)
+
         setContent {
             MyApp {
                 val orientation = LocalConfiguration.current.orientation
-                Log.d("debug", orientation.toString())
 
-                val handler = remember { Handler(Looper.getMainLooper()) }
-                val weatherapiForecastData = periodicFetch(handler, Weatherapi())
-                //val openMeteoForecastData = periodicFetch(handler, OpenMeteo())
-//                val accuweatherApiData = periodicFetch(handler, Accuweather())
-                val wunderData = periodicFetch(handler, Wunderground())
+                // ViewModel holds and updates weather state
+                val vm: WeatherViewModel = viewModel()
+                val uiState by vm.state.collectAsState()
 
-                if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(
-                    weatherapiForecastData, wunderData
-                )
-                else PortraitLayout(
-                    weatherapiForecastData, wunderData
-                )
+                // Show layouts; the composables observe the MutableState values and will recompose
+                // when new data arrives.
+                if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(uiState)
+                else PortraitLayout(uiState)
 
+                // Keep the screen on and hide system bars as before.
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 val windowInsetsController =
                     WindowCompat.getInsetsController(window, window.decorView)
                 windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
                 windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
-                // Configure the behavior of the hidden system bars.
                 windowInsetsController.systemBarsBehavior =
                     WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
@@ -76,8 +73,10 @@ fun MyApp(content: @Composable () -> Unit) {
         colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
         content = {
             Surface(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
-                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                color = Color.Black,
                 contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
                 content()
@@ -87,17 +86,17 @@ fun MyApp(content: @Composable () -> Unit) {
 
 @Composable
 fun LandscapeLayout(
-    data: MutableState<WeatherapiForecast?>,
-    data4: MutableState<WundergroundData?>,
+    state: WeatherUiState,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .fillMaxHeight(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
-        if (data.value?.current?.isDay == 0) {
+        if (state.weatherapi?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
@@ -109,11 +108,11 @@ fun LandscapeLayout(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LayoutTop(
-                    wunderData = data4.value,
+                    wunderData = state.wunderground,
                 )
-                if (data4.value != null) {
+                if (state.wunderground != null) {
                     Text(
-                        "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
+                        "Last updated: ${state.wunderground?.observations?.firstOrNull()?.obsTimeLocal}",
                         fontSize = 12.sp,
                     )
                 }
@@ -125,7 +124,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LayoutBottom(wunderData = data4.value)
+                LayoutBottom(wunderData = state.wunderground)
             }
         }
     }
@@ -134,8 +133,7 @@ fun LandscapeLayout(
 
 @Composable
 fun PortraitLayout(
-    data: MutableState<WeatherapiForecast?>,
-    data4: MutableState<WundergroundData?>,
+    state: WeatherUiState,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -143,17 +141,17 @@ fun PortraitLayout(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         var frontColor = MaterialTheme.colorScheme.onBackground
-        if (data.value?.current?.isDay == 0) {
+        if (state.weatherapi?.current?.isDay == 0) {
             frontColor = Color.LightGray
         }
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             LayoutTop(
-                wunderData = data4.value,
+                wunderData = state.wunderground,
             )
-            LayoutBottom(data4.value)
-            if (data4.value != null) {
+            LayoutBottom(state.wunderground)
+            if (state.wunderground != null) {
                 Text(
-                    "Last updated: ${data4.value?.observations?.firstOrNull()?.obsTimeLocal}",
+                    "Last updated: ${state.wunderground?.observations?.firstOrNull()?.obsTimeLocal}",
                     fontSize = 12.sp,
                 )
             }
@@ -214,65 +212,69 @@ fun LayoutBottom(
     wunderData: WundergroundData?,
 ) {
     if (wunderData != null) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PressureSensorScreen1()
+                PressureSensorDisplay()
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val humid = wunderData.observations.firstOrNull()?.humidity?.toInt()
+                Text(text = "${humid ?: "N/A"} %", fontSize = 18.sp) // Fallback for humid
+                Icon(
+                    imageVector = Icons.Outlined.WaterDrop,
+                    contentDescription = "Humid Icon",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .padding(6.dp)
+                )
+                val humidText = when {
+                    humid == null -> "No data" // Handle null humid
+                    humid < 40 -> "Dry"
+                    humid < 60 -> "Good"
+                    humid < 80 -> "Humid" // patchy rain
+                    else -> "Wet"
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val humid = wunderData.observations.firstOrNull()?.humidity?.toInt()
-                    Text(text = "${humid.toString()} %", fontSize = 18.sp)
-                    Icon(
-                        imageVector = Icons.Outlined.WaterDrop,
-                        contentDescription = "Humid Icon",
-                        modifier = Modifier.size(56.dp).padding(6.dp)
-                    )
-                    val humidText = when {
-                        humid!! < 40 -> "Dry"
-                        humid < 60 -> "Good"
-                        humid < 80 -> "Humid" // patchy rain
-                        else -> "Wet"
-                    }
-                    Text(text = humidText, fontSize = 18.sp)
+                Text(text = humidText, fontSize = 18.sp)
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val dewpt = wunderData.observations.firstOrNull()?.metric?.dewpt?.toInt()
+                Text(text = "Dew point", fontSize = 18.sp)
+                Icon(
+                    painter = painterResource(id = R.drawable.dew_point_24dp),
+                    contentDescription = "Humid Icon",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .padding(6.dp)
+                )
+                Text(text = "${dewpt ?: "N/A"} °C", fontSize = 18.sp) // Fallback for dewpt
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
+                Text(text = "${windSpeed ?: "N/A"} km/h") // Fallback for windSpeed
+                Icon(
+                    imageVector = Icons.Outlined.Air,
+                    contentDescription = "Air Icon",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(6.dp)
+                )
+                val windText = when {
+                    windSpeed == null -> "N/A" // Handle null windSpeed
+                    windSpeed == 0 -> "Still"
+                    windSpeed < 10 -> "Light breeze" // rain
+                    windSpeed < 20 -> "Windy" // patchy rain
+                    else -> "Strong Wind" // clear
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val dewpt = wunderData.observations.firstOrNull()?.metric?.dewpt?.toInt()
-                    Text(text = "Dew point", fontSize = 18.sp)
-                    Icon(
-                        painter = painterResource(id = R.drawable.dew_point_24dp),
-                        contentDescription = "Humid Icon",
-                        modifier = Modifier.size(56.dp).padding(6.dp)
-                    )
-                    Text(text = "${dewpt.toString()} °C", fontSize = 18.sp)
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
-                    Text(text = "$windSpeed km/h")
-                    Icon(
-                        imageVector = Icons.Outlined.Air,
-                        contentDescription = "Air Icon",
-                        modifier = Modifier.size(64.dp).padding(6.dp)
-                    )
-                    val windText = when {
-                        windSpeed == 0 -> "Still"
-                        windSpeed!! < 10 -> "Light breeze" // rain
-                        windSpeed < 20 -> "Windy" // patchy rain
-                        else -> "Strong Wind" // clear
-                    }
-                    Text(text = windText, fontSize = 18.sp)
-                }
+                Text(text = windText, fontSize = 18.sp)
             }
         }
 
@@ -316,9 +318,25 @@ fun LayoutBottom(
                     color = color,
                     modifier = Modifier.padding(top = 8.dp)
                 )
+            } else {
+                // Fallback for UV index if null
+                Text(
+                    "UV -",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Light,
+                    color = Color.LightGray,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
 
+    } else {
+        // Fallback UI when wunderData is entirely null
+        Text(
+            text = "",
+            fontSize = 18.sp,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -335,3 +353,4 @@ fun getDrawableResourceId(iconCode: Int? = 30, dayOrNight: String? = "d"): Int {
         R.drawable.im_d_28 // Fallback if not found
     }
 }
+
