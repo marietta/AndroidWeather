@@ -35,9 +35,8 @@ import com.example.androidWeather.dto.wunderground.WundergroundData
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Schedule background work once at startup
-        enqueuePeriodicFetch(applicationContext, WeatherWorker.WEATHERAPI_TYPE, 10L)
-        enqueuePeriodicFetch(applicationContext, WeatherWorker.WUNDERGROUND_TYPE, 10L)
+        // Keep the screen on and prepare system bars behavior once
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setContent {
             MyApp {
@@ -51,17 +50,16 @@ class MainActivity : ComponentActivity() {
                 // when new data arrives.
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) LandscapeLayout(uiState)
                 else PortraitLayout(uiState)
-
-                // Keep the screen on and hide system bars as before.
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                val windowInsetsController =
-                    WindowCompat.getInsetsController(window, window.decorView)
-                windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
-                windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
-                windowInsetsController.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             }
         }
+
+        // Hide system bars outside of composition so it runs only once
+        val windowInsetsController =
+            WindowCompat.getInsetsController(window, window.decorView)
+        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
+        windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars())
+        windowInsetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
 }
 
@@ -112,7 +110,7 @@ fun LandscapeLayout(
                 )
                 if (state.wunderground != null) {
                     Text(
-                        "Last updated: ${state.wunderground?.observations?.firstOrNull()?.obsTimeLocal}",
+                        "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal}",
                         fontSize = 12.sp,
                     )
                 }
@@ -151,7 +149,7 @@ fun PortraitLayout(
             LayoutBottom(state.wunderground)
             if (state.wunderground != null) {
                 Text(
-                    "Last updated: ${state.wunderground?.observations?.firstOrNull()?.obsTimeLocal}",
+                    "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal}",
                     fontSize = 12.sp,
                 )
             }

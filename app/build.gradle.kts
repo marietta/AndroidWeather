@@ -37,6 +37,11 @@ android {
             "ACCUWEATHER_KEY",
             "\"${System.getenv("ACCUWEATHER_KEY")}\""
         )
+        buildConfigField(
+            "String",
+            "WUNDERGROUND_KEY",
+            "\"${System.getenv("WUNDERGROUND_KEY")}\""
+        )
     }
 
     buildTypes {
