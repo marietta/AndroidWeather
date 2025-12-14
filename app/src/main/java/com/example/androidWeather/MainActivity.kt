@@ -2,6 +2,7 @@ package com.example.androidWeather
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,8 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,11 +29,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.androidWeather.dto.wunderground.WundergroundData
 import com.example.androidWeather.ui.WeatherUiState
 import com.example.androidWeather.ui.WeatherViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import android.util.Log
-import com.example.androidWeather.dto.wunderground.WundergroundData
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +109,7 @@ fun LandscapeLayout(
             ) {
                 LayoutTop(
                     wunderData = state.wunderground,
+                    isLoading = state.isLoading,
                 )
                 if (state.wunderground != null) {
                     Text(
@@ -145,6 +148,7 @@ fun PortraitLayout(
         CompositionLocalProvider(LocalContentColor provides frontColor) {
             LayoutTop(
                 wunderData = state.wunderground,
+                isLoading = state.isLoading,
             )
             LayoutBottom(state.wunderground)
             if (state.wunderground != null) {
@@ -160,39 +164,39 @@ fun PortraitLayout(
 @Composable
 fun LayoutTop(
     wunderData: WundergroundData?,
+    isLoading: Boolean = false,
 ) {
 
-    val temp = wunderData?.observations?.firstOrNull()?.metric?.temp
-    val intPart = temp?.toInt()
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (wunderData == null) {
+    if (isLoading) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+
             Text(
                 text = "Loading...",
                 fontSize = 48.sp,
             )
-        } else {
-            Text(
-                "$intPart ",
-                fontSize = 142.sp,
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Light,
-            )
-            Text(
-                "°C",
-                fontSize = 48.sp,
-                fontFamily = FontFamily.SansSerif,
-                fontWeight = FontWeight.Light,
-            )
         }
-    }
-
-    if (wunderData != null) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    } else if (wunderData != null) {
+        val intPart = wunderData.observations.firstOrNull()?.metric?.temp?.toInt()
+        if (intPart != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "$intPart ",
+                    fontSize = 142.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Light,
+                )
+                Text(
+                    "°C",
+                    fontSize = 48.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    fontWeight = FontWeight.Light,
+                )
+            }
             Text(
                 text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
                 fontSize = 48.sp,
@@ -222,7 +226,7 @@ fun LayoutBottom(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val humid = wunderData.observations.firstOrNull()?.humidity?.toInt()
-                Text(text = "${humid ?: "N/A"} %", fontSize = 18.sp) // Fallback for humid
+                Text(text = "${humid ?: "-"} %", fontSize = 18.sp) // Fallback for humid
                 Icon(
                     imageVector = Icons.Outlined.WaterDrop,
                     contentDescription = "Humid Icon",
@@ -231,7 +235,7 @@ fun LayoutBottom(
                         .padding(6.dp)
                 )
                 val humidText = when {
-                    humid == null -> "No data" // Handle null humid
+                    humid == null -> "-" // Handle null humid
                     humid < 40 -> "Dry"
                     humid < 60 -> "Good"
                     humid < 80 -> "Humid" // patchy rain
@@ -251,13 +255,13 @@ fun LayoutBottom(
                         .size(56.dp)
                         .padding(6.dp)
                 )
-                Text(text = "${dewpt ?: "N/A"} °C", fontSize = 18.sp) // Fallback for dewpt
+                Text(text = "${dewpt ?: "-"} °C", fontSize = 18.sp) // Fallback for dewpt
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val windSpeed = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.windSpeed
-                Text(text = "${windSpeed ?: "N/A"} km/h") // Fallback for windSpeed
+                Text(text = "${windSpeed ?: "-"} km/h") // Fallback for windSpeed
                 Icon(
                     imageVector = Icons.Outlined.Air,
                     contentDescription = "Air Icon",
@@ -266,7 +270,7 @@ fun LayoutBottom(
                         .padding(6.dp)
                 )
                 val windText = when {
-                    windSpeed == null -> "N/A" // Handle null windSpeed
+                    windSpeed == null -> "-" // Handle null windSpeed
                     windSpeed == 0 -> "Still"
                     windSpeed < 10 -> "Light breeze" // rain
                     windSpeed < 20 -> "Windy" // patchy rain

@@ -48,7 +48,7 @@ class WeatherViewModel(
     }
 
     private suspend fun fetchWeatherapiOnce() {
-        _state.value = _state.value.copy(isLoading = true, error = null)
+        _state.value = _state.value.copy(isLoading = false, error = null)
         val result = try {
             withContext(Dispatchers.IO) { repository.fetchWeatherapi() }
         } catch (e: Exception) {
@@ -59,7 +59,7 @@ class WeatherViewModel(
     }
 
     private suspend fun fetchWundergroundOnce() {
-        _state.value = _state.value.copy(isLoading = true, error = null)
+        _state.value = _state.value.copy(isLoading = false, error = null)
         val result = try {
             withContext(Dispatchers.IO) { repository.fetchWunderground() }
         } catch (e: Exception) {
