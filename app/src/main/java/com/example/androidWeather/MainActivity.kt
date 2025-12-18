@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
 import androidx.compose.material.icons.outlined.WaterDrop
@@ -69,8 +70,19 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(content: @Composable () -> Unit) {
     val useDarkTheme = true
+    // Force an absolute black theme for background and surfaces
+    val colors = if (useDarkTheme) {
+        darkColorScheme(
+            background = Color.Black,
+            surface = Color.Black,
+            onBackground = Color.White,
+            onSurface = Color.White,
+        )
+    } else {
+        lightColorScheme()
+    }
     MaterialTheme(
-        colorScheme = if (useDarkTheme) darkColorScheme() else lightColorScheme(),
+        colorScheme = colors,
         content = {
             Surface(
                 modifier = Modifier
@@ -111,9 +123,15 @@ fun LandscapeLayout(
                     wunderData = state.wunderground,
                     isLoading = state.isLoading,
                 )
+                if (state.error != null && state.wunderground == null) {
+                    Text(text = "Error: ${state.error}", color = Color.Red, textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+                }
+                if (!state.isLoading && state.wunderground == null && state.error == null) {
+                    Text(text = "No weather data available", textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+                }
                 if (state.wunderground != null) {
                     Text(
-                        "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal}",
+                        "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal ?: "-"}",
                         fontSize = 12.sp,
                     )
                 }
@@ -125,6 +143,7 @@ fun LandscapeLayout(
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                PressureSensorDisplay()
                 LayoutBottom(wunderData = state.wunderground)
             }
         }
@@ -150,10 +169,22 @@ fun PortraitLayout(
                 wunderData = state.wunderground,
                 isLoading = state.isLoading,
             )
+
+            if (state.error != null && state.wunderground == null) {
+                Text(text = "Error: ${state.error}", color = Color.Red, textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+            }
+
+            if (!state.isLoading && state.wunderground == null && state.error == null) {
+                Text(text = "No weather data available", textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+            }
+
+            PressureSensorDisplay()
+
             LayoutBottom(state.wunderground)
+
             if (state.wunderground != null) {
                 Text(
-                    "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal}",
+                    "Last updated: ${state.wunderground.observations.firstOrNull()?.obsTimeLocal ?: "-"}",
                     fontSize = 12.sp,
                 )
             }
@@ -198,7 +229,7 @@ fun LayoutTop(
                 )
             }
             Text(
-                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong.toString(),
+                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong ?: "",
                 fontSize = 48.sp,
                 lineHeight = 48.sp,
                 fontWeight = FontWeight.Light,
@@ -214,14 +245,6 @@ fun LayoutBottom(
     wunderData: WundergroundData?,
 ) {
     if (wunderData != null) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PressureSensorDisplay()
-            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -278,21 +301,24 @@ fun LayoutBottom(
                 }
                 Text(text = windText, fontSize = 18.sp)
             }
-        }
+
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement =Arrangement.Center,
         ) {
             val iconCode = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.iconCode
             val dayOrNight =
                 wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight?.lowercase()
 
-            Image(
-                painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
-                contentDescription = "Weather Image",
-                modifier = Modifier
-                    .height(100.dp)
-            )
+            if (!(iconCode == null || dayOrNight == null))
+                Image(
+                    painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
+                    contentDescription = "Weather Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp)
+                )
         }
 
         if (wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.dayOrNight == "D") {
@@ -331,14 +357,6 @@ fun LayoutBottom(
                 )
             }
         }
-
-    } else {
-        // Fallback UI when wunderData is entirely null
-        Text(
-            text = "",
-            fontSize = 18.sp,
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }
 
@@ -348,8 +366,7 @@ fun getDrawableResourceId(iconCode: Int? = 30, dayOrNight: String? = "d"): Int {
     return try {
         // Construct the resource name based on the icon code
         // Get the resource ID dynamically
-        val resId = R.drawable::class.java.getField(resourceName).getInt(null)
-        resId
+        R.drawable::class.java.getField(resourceName).getInt(null)
     } catch (_: Exception) {
         Log.d("Wunderground wx", "Missing icon: $resourceName")
         R.drawable.im_d_28 // Fallback if not found

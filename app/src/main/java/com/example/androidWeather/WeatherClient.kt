@@ -34,7 +34,10 @@ class Weatherapi : Api<WeatherapiForecast?> {
             Log.d("Weatherapi", response.status.toString())
             if (response.status.value == 200) {
                 response.body()
-            } else null
+            } else {
+                Log.e("Weatherapi", "Error response: ${response.status}")
+                null
+            }
         } catch (e: ConnectTimeoutException) {
             delay(2000L)
             null

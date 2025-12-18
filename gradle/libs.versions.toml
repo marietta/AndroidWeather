@@ -1,8 +1,8 @@
 [versions]
-activityCompose = "1.12.1"
+activityCompose = "1.12.2"
 agp = "8.12.3"
 coilCompose = "2.7.0"
-composeBom = "2025.12.00"
+composeBom = "2025.12.01"
 coreKtx = "1.17.0"
 jsoup = "1.21.2"
 kotlin = "2.2.21"

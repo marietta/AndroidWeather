@@ -5,14 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.androidWeather.data.WeatherRepository
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
 import com.example.androidWeather.dto.wunderground.WundergroundData
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class WeatherUiState(
     val weatherapi: WeatherapiForecast? = null,
@@ -48,7 +44,6 @@ class WeatherViewModel(
     }
 
     private suspend fun fetchWeatherapiOnce() {
-        _state.value = _state.value.copy(isLoading = false, error = null)
         val result = try {
             withContext(Dispatchers.IO) { repository.fetchWeatherapi() }
         } catch (e: Exception) {
@@ -59,7 +54,6 @@ class WeatherViewModel(
     }
 
     private suspend fun fetchWundergroundOnce() {
-        _state.value = _state.value.copy(isLoading = false, error = null)
         val result = try {
             withContext(Dispatchers.IO) { repository.fetchWunderground() }
         } catch (e: Exception) {
