@@ -102,4 +102,5 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.work.runtime.ktx)
+    debugImplementation(libs.androidx.ui.tooling)
 }

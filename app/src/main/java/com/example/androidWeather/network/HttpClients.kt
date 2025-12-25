@@ -1,22 +1,22 @@
 package com.example.androidWeather.network
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 object HttpClients {
-    val default: HttpClient = HttpClient(Android) {
-        install(ContentNegotiation) {
-            json(
-                Json {
-                    allowStructuredMapKeys = true
-                    ignoreUnknownKeys = true
-                }
-            )
+    private val json = Json {
+        allowStructuredMapKeys = true
+        ignoreUnknownKeys = true
+    }
+
+    val default: HttpClient by lazy {
+        HttpClient(Android) {
+            install(ContentNegotiation) {
+                json(json)
+            }
         }
-        defaultRequest { }
     }
 }
