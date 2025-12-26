@@ -27,7 +27,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "w360dp-h640dp")
 class WeatherIconTest {
 
     @get:Rule
@@ -36,9 +36,12 @@ class WeatherIconTest {
     @OptIn(ExperimentalCoilApi::class)
     private lateinit var engine: FakeImageLoaderEngine
 
+    private val requests = mutableListOf<ImageRequest>()
+
     @OptIn(ExperimentalCoilApi::class)
     @Before
     fun setup() {
+        requests.clear()
         engine = FakeImageLoaderEngine.Builder()
             .intercept("https://www.wunderground.com/static/i/c/v4/35.svg", ColorDrawable(Color.RED))
             .build()
@@ -46,6 +49,9 @@ class WeatherIconTest {
 
     @Test
     fun weatherIcon_withCode35_showsIcon() {
+        // Clear any previous requests
+        requests.clear()
+        
         // Setup mock data with icon code 35
         val mockObservationsCurrent = ObservationsCurrent(
             cloudCoverPhrase = "Partly Cloudy",
@@ -100,7 +106,6 @@ class WeatherIconTest {
         // Verify that the Weather Icon is displayed and has the correct URL
         val expectedUrl = "https://www.wunderground.com/static/i/c/v4/35.svg"
 
-        val requests = mutableListOf<ImageRequest>()
         val debugEngine = object : Interceptor {
             override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
                 requests.add(chain.request)
