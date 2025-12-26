@@ -6,8 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WundergroundData(
     val observations: List<Observation>,
-    var observationsCurrent: List<V3WxObservations?> = emptyList(),
-)
+    @SerialName("observationsCurrent") val observationsCurrent: List<V3WxObservations?> = emptyList(),
+) {
+    val firstObservation: Observation? get() = observations.firstOrNull()
+    val firstV3Observation: ObservationsCurrent? get() = observationsCurrent.firstOrNull()?.observationsCurrent
+}
 
 @Serializable
 data class Observation(
@@ -52,6 +55,7 @@ data class V3WxObservations(
 @Serializable
 data class ObservationsCurrent(
     val cloudCeiling: Int? = null,
+    val cloudCover:  Int? = null,
     val cloudCoverPhrase: String,
     val dayOfWeek: String,
     val dayOrNight: String,
@@ -84,6 +88,7 @@ data class ObservationsCurrent(
     val temperatureMax24Hour: Int,
     val temperatureMaxSince7Am: Int,
     val temperatureMin24Hour: Int,
+    val temperatureWetBulbGlobe: Int,
     val temperatureWindChill: Int,
     val uvDescription: String,
     val uvIndex: Int,

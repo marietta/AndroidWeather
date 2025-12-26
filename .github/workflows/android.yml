@@ -13,11 +13,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v5
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
           cache: 'gradle'
 
@@ -28,12 +27,16 @@ jobs:
         env:
           ACCUWEATHER_KEY: ${{ secrets.ACCUWEATHER_KEY }}
           WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
+          OPENWEATHER_KEY: ${{ secrets.OPENWEATHER_KEY }}
+          WUNDERGROUND_KEY: ${{ secrets.WUNDERGROUND_KEY }}
         run: ./gradlew build --no-daemon
 
       - name: Build Debug APK
         env:
           ACCUWEATHER_KEY: ${{ secrets.ACCUWEATHER_KEY }}
           WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
+          OPENWEATHER_KEY: ${{ secrets.OPENWEATHER_KEY }}
+          WUNDERGROUND_KEY: ${{ secrets.WUNDERGROUND_KEY }}
         run: ./gradlew assembleDebug
 
       - name: Upload APK

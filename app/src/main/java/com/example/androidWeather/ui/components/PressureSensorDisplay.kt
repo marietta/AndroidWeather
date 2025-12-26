@@ -1,4 +1,4 @@
-package com.example.androidWeather
+package com.example.androidWeather.ui.components
 
 import android.content.Context
 import android.hardware.Sensor
@@ -16,9 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.androidWeather.R
+
+import androidx.compose.ui.res.stringResource
 
 @Composable
-fun PressureSensorScreen1(isDay: Int?) {
+fun PressureSensorDisplay() {
     val context = LocalContext.current
     var pressureValue by remember { mutableStateOf<Float?>(null) }
 
@@ -44,23 +47,26 @@ fun PressureSensorScreen1(isDay: Int?) {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val pressure = (pressureValue ?: 0f).toInt()
-        Text(text = "$pressure hPa")
+        val pressure = pressureValue?.toInt() ?: 0
+        Text(text = stringResource(R.string.pressure_format, pressure))
 
         Icon(
             painter = painterResource(id = R.drawable.cyclone_48px),
             contentDescription = "Pressure Icon",
-            modifier = Modifier.size(56.dp).padding(12.dp)
+            modifier = Modifier
+                .size(56.dp)
+                .padding(6.dp)
         )
 
-        val ptext = when {
-            pressure < 990 -> "storm and chaos"
-            pressure < 996 -> "wet and windy bleh"
-            pressure < 1001 -> "clouds and sun"
-            pressure < 1030 -> "calm and clear"
-            else -> "danger of drought"
+        val pressureStatus = when {
+            pressure == 0 -> stringResource(R.string.pressure_no_data)
+            pressure < 990 -> stringResource(R.string.pressure_storm)
+            pressure < 996 -> stringResource(R.string.pressure_wet)
+            pressure < 1001 -> stringResource(R.string.pressure_clouds)
+            pressure < 1030 -> stringResource(R.string.pressure_calm)
+            else -> stringResource(R.string.pressure_drought)
         }
-        Text(text = ptext)
+        Text(text = pressureStatus)
     }
 }
 

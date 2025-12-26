@@ -1,166 +1,90 @@
 package com.example.androidWeather
 
-import android.icu.text.SimpleDateFormat
-import android.icu.util.TimeZone
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import com.example.androidWeather.dto.accuweather.AccuweatherApiItem
-import com.example.androidWeather.dto.openMeteo.OpenMeteoForecast
 import com.example.androidWeather.dto.weatherapi.WeatherapiForecast
+import com.example.androidWeather.dto.wunderground.V3WxObservations
 import com.example.androidWeather.dto.wunderground.WundergroundData
-import io.ktor.client.*
+import com.example.androidWeather.network.HttpClients
 import io.ktor.client.call.*
-import io.ktor.client.engine.android.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
-import java.util.*
 
-interface Api<T> {
-    val lat: Double
-        get() = 47.395
-    val lon: Double
-        get() = 19.123
-    val url: String
-    val intervalInMinutes: Int
-        get() = 15
-    val data: MutableState<T>
-    suspend fun fetch()
-
-    companion object {
-        val ktorClient = HttpClient(Android) {
-            install(ContentNegotiation) {
-                json(Json {
-                    allowStructuredMapKeys = true
-                    ignoreUnknownKeys = true
-                })
-            }
-            defaultRequest {
-                headers {
-                    contentType(ContentType.Application.Json)
-                }
-            }
-        }
-    }
+sealed class ApiResult<out T> {
+    data class Success<out T>(val data: T) : ApiResult<T>()
+    data class Error(val message: String, val exception: Throwable? = null) : ApiResult<Nothing>()
 }
 
-class OpenMeteo : Api<OpenMeteoForecast?> {
-    override val data = mutableStateOf<OpenMeteoForecast?>(null)
-    override val url: String
-        get() = "https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}" +
-                "&current=temperature_2m&minutely_15=temperature_2m" +
-                "&hourly=temperature_2m,uv_index&timezone=Europe%2FBerlin&forecast_days=1" +
-                "&forecast_hours=1&forecast_minutely_15=4"
-
-    override suspend fun fetch() {
-        val response = Api.ktorClient.get(url)
-        if (response.status.value == 200) data.value = response.body()
-        else Log.d("OpenMeteoForecast", response.status.toString())
-
-    }
+interface WeatherApi<T> {
+    suspend fun fetch(lat: Double, lon: Double): ApiResult<T>
 }
 
-class OpenWeather : Api<OpenMeteoForecast?> {
-    override val data = mutableStateOf<OpenMeteoForecast?>(null)
-    private val apiKey = BuildConfig.OPENWEATHER_KEY
-
-    override val url: String
-        get() = "https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}"
-
-    override suspend fun fetch() {
-        val response = Api.ktorClient.get(url)
-        if (response.status.value == 200) data.value = response.body()
-        else Log.d("OpenWeather", response.status.toString())
-    }
-}
-
-class Weatherapi : Api<WeatherapiForecast?> {
-    override val data = mutableStateOf<WeatherapiForecast?>(null)
+class WeatherapiClient : WeatherApi<WeatherapiForecast> {
     private val apiKey = BuildConfig.WEATHERAPI_KEY
 
-    override val url: String
-        get() = "https://api.weatherapi.com/v1/forecast.json?key=${apiKey}" +
-                "&q=${lat},${lon}&days=1"
+    private fun getUrl(lat: Double, lon: Double) =
+        "https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$lat,$lon&days=1"
 
-    override suspend fun fetch() {
-        val response = Api.ktorClient.get(url)
-        if (response.status.value == 200) {
-            // Log.d("Weatherapi", response.body())
-            data.value = response.body()
-        } else Log.d("Weatherapi", response.status.toString())
-    }
-}
-
-class Accuweather : Api<AccuweatherApiItem?> {
-    override val data = mutableStateOf<AccuweatherApiItem?>(null)
-    private val apiKey = BuildConfig.ACCUWEATHER_KEY
-    override val url: String
-        get() = "https://dataservice.accuweather.com/currentconditions/v1/189894?apikey=${apiKey}"
-
-    override val intervalInMinutes: Int
-        get() = 12 * 60
-    private var nextFetch: Date = Date()
-
-    override suspend fun fetch() {
-        if (Date().after(nextFetch)) {
-
-            val response = Api.ktorClient.get(url)
-            Log.d("Accuweather", response.status.toString())
-            if (response.status == HttpStatusCode.OK) {
-                Log.d("Accuweather", response.headers.toString())
-                val expires = response.headers["Expires"]
-
-                val sdf = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.ENGLISH)
-                sdf.timeZone = TimeZone.getTimeZone("GMT")
-                val expiredDate = sdf.parse(expires)
-                Log.d("Accuweather", expiredDate.toString())
-
-                val value: List<AccuweatherApiItem> = response.body()
-                data.value = value.firstOrNull()
-                nextFetch = expiredDate
-            }
-
-        } else Log.d("Accuweather", "using cached. Next fetch $nextFetch")
-    }
-}
-
-class Wunderground : Api<WundergroundData?> {
-    override val data = mutableStateOf<WundergroundData?>(null)
-
-    override val url: String
-        get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP507&numericPrecision=decimal&format=json&units=m"
-    val url2: String
-        get() = "https://api.weather.com/v2/pws/observations/current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&stationId=IBUDAP576&numericPrecision=decimal&format=json&units=m"
-
-    val observations: String
-        get() = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current?apiKey=e1f10a1e78da46f5b10a1e78da96f525&geocodes=${lat},${lon}&language=en-US&units=m&format=json"
-
-    override suspend fun fetch() {
-        val response1 = Api.ktorClient.get(url)
-        if (response1.status.value == 200) data.value = response1.body()
-        else Log.d("Wunderground", response1.status.toString())
-
-        val response2 = Api.ktorClient.get(url2)
-        if (response2.status.value == 200) {
-            if (response1.status.value == 204) data.value = response2.body()
-            val apiResponse = Json.decodeFromString<WundergroundData>(response2.body())
-            val uvIndex = apiResponse.observations.firstOrNull()?.uv
-            if (uvIndex != null) {
-                data.value?.observations?.firstOrNull()?.uv = uvIndex
+    override suspend fun fetch(lat: Double, lon: Double): ApiResult<WeatherapiForecast> {
+        return try {
+            val response = HttpClients.default.get(getUrl(lat, lon))
+            if (response.status.value == 200) {
+                ApiResult.Success(response.body())
             } else {
-                Log.d("Wunderground", response2.status.toString())
+                Log.e("WeatherapiClient", "Error response: ${response.status}")
+                ApiResult.Error("API Error: ${response.status}")
             }
+        } catch (e: Exception) {
+            Log.e("WeatherapiClient", "Fetch failed: ${e.message}")
+            ApiResult.Error("Unexpected error", e)
         }
+    }
+}
 
-        val response3 = Api.ktorClient.get(observations)
-        if (response3.status.value == 200) {
-            data.value?.observationsCurrent = response3.body()
-        } else {
-            Log.d("Wunderground wx", response2.status.toString())
+class WundergroundClient : WeatherApi<WundergroundData> {
+    private val apiKey = BuildConfig.WUNDERGROUND_KEY
+
+    private val pwsBaseUrl = "https://api.weather.com/v2/pws/observations/current"
+    private val v3BaseUrl = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current"
+
+    private fun getPwsUrl(stationId: String) =
+        "$pwsBaseUrl?apiKey=$apiKey&stationId=$stationId&numericPrecision=decimal&format=json&units=m"
+
+    private fun getV3Url(lat: Double, lon: Double) =
+        "$v3BaseUrl?apiKey=$apiKey&geocodes=$lat,$lon&language=en-US&units=m&format=json"
+
+    suspend fun fetch(lat: Double, lon: Double, stationId: String): ApiResult<WundergroundData> {
+        return try {
+            // Main observation from a station
+            val pwsResponse = HttpClients.default.get(getPwsUrl(stationId))
+            val baseData: WundergroundData? = if (pwsResponse.status.value == 200) {
+                pwsResponse.body()
+            } else {
+                Log.e("WundergroundClient", "PWS error: ${pwsResponse.status}")
+                null
+            }
+
+            // Additional observations from V3 API
+            val v3Response = HttpClients.default.get(getV3Url(lat, lon))
+            val v3Data: List<V3WxObservations?> = if (v3Response.status.value == 200) {
+                val body: List<V3WxObservations?> = v3Response.body()
+                if (body.firstOrNull()?.observationsCurrent != null) body else emptyList()
+            } else {
+                Log.e("WundergroundClient", "V3 error: ${v3Response.status}")
+                emptyList()
+            }
+
+            if (baseData == null && v3Data.isEmpty()) {
+                ApiResult.Error("Failed to fetch Wunderground data")
+            } else {
+                val finalData = (baseData ?: WundergroundData(emptyList())).copy(observationsCurrent = v3Data)
+                ApiResult.Success(finalData)
+            }
+        } catch (e: Exception) {
+            Log.e("WundergroundClient", "Fetch failed: ${e.message}")
+            ApiResult.Error("Unexpected error", e)
         }
+    }
+
+    override suspend fun fetch(lat: Double, lon: Double): ApiResult<WundergroundData> {
+        return fetch(lat, lon, "IBUDAP576") // Default station
     }
 }

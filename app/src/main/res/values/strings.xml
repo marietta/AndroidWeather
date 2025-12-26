@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">AndroidWeather</string>
+    <string name="loading">Loading...</string>
+    <string name="error_format">Error: %s</string>
+    <string name="no_weather_data">No weather data available</string>
+    <string name="last_updated_format">Last updated: %s</string>
+    <string name="humidity_format">%d %%</string>
+    <string name="dew_point">Dew point</string>
+    <string name="celsius_format">%d °C</string>
+    <string name="celsius_symbol">°C</string>
+    <string name="wind_speed_format">%d km/h</string>
+    <string name="uv_format">UV %d</string>
+    <string name="pressure_format">%d hPa</string>
+    <string name="humidity_dry">Dry</string>
+    <string name="humidity_good">Good</string>
+    <string name="humidity_humid">Humid</string>
+    <string name="humidity_wet">Wet</string>
+    <string name="wind_still">Still</string>
+    <string name="wind_breeze">Light breeze</string>
+    <string name="wind_windy">Windy</string>
+    <string name="wind_strong">Strong Wind</string>
+    <string name="pressure_no_data">no data</string>
+    <string name="pressure_storm">storm and chaos</string>
+    <string name="pressure_wet">wet and windy bleh</string>
+    <string name="pressure_clouds">clouds and sun</string>
+    <string name="pressure_calm">calm and clear</string>
+    <string name="pressure_drought">danger of drought</string>
 </resources>
