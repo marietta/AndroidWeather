@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
+import coil.imageLoader
 import com.example.androidWeather.R
 import com.example.androidWeather.dto.wunderground.WundergroundData
 
@@ -139,7 +140,7 @@ private fun WeatherIcon(
                     .crossfade(true)
                     .build(),
                 contentDescription = "Weather Icon",
-                imageLoader = imageLoader ?: coil.compose.LocalImageLoader.current,
+                imageLoader = imageLoader ?: context.imageLoader,
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
