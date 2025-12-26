@@ -9,7 +9,7 @@ import com.example.androidWeather.ui.WeatherUiState
 @Composable
 fun LandscapeLayout(
     state: WeatherUiState,
-    getDrawableResourceId: (Int?, String?) -> Int
+    getDrawableResourceId: (Int?) -> Int
 ) {
     Row(
         modifier = Modifier

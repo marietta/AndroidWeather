@@ -1,7 +1,5 @@
 package com.example.androidWeather.ui.components
 
-import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Air
@@ -9,22 +7,28 @@ import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import com.example.androidWeather.R
 import com.example.androidWeather.dto.wunderground.WundergroundData
 
 @Composable
 fun LayoutBottom(
     wunderData: WundergroundData?,
-    getDrawableResourceId: (Int?, String?) -> Int
+    getDrawableResourceId: (Int?) -> Int
 ) {
     HumidityRow(wunderData)
     DewPointRow(wunderData)
@@ -103,20 +107,38 @@ private fun WeatherRow(
 }
 
 @Composable
-private fun WeatherIcon(wunderData: WundergroundData?, getDrawableResourceId: (Int?, String?) -> Int) {
+private fun WeatherIcon(
+    wunderData: WundergroundData?,
+    getDrawableResourceId: (Int?) -> Int
+) {
     val currentObs = wunderData?.observationsCurrent?.firstOrNull()?.observationsCurrent
     val iconCode = currentObs?.iconCode
-    val dayOrNight = currentObs?.dayOrNight?.lowercase()
 
-    if (iconCode != null && dayOrNight != null) {
+    if (iconCode != null) {
+        val context = LocalContext.current
+
+        val resId = remember(iconCode) {
+            getDrawableResourceId(iconCode)
+        }
+
+        val model = if (resId != 0) {
+            resId
+        } else {
+            "https://www.wunderground.com/static/i/c/v4/${iconCode}.svg"
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxHeight(0.4f)
         ) {
-            Image(
-                painter = painterResource(id = getDrawableResourceId(iconCode, dayOrNight)),
-                contentDescription = "Weather Image",
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(model)
+                    .decoderFactory(SvgDecoder.Factory())
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Weather Icon",
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
@@ -155,7 +177,9 @@ private fun WeatherIconWrapper(
     contentDescription: String,
     size: androidx.compose.ui.unit.Dp = 56.dp
 ) {
-    val modifier = Modifier.size(size).padding(6.dp)
+    val modifier = Modifier
+        .size(size)
+        .padding(6.dp)
     if (imageVector != null) {
         Icon(imageVector = imageVector, contentDescription = contentDescription, modifier = modifier)
     } else if (resourceId != null) {

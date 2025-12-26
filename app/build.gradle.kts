@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)

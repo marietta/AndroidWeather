@@ -11,7 +11,7 @@ import com.example.androidWeather.ui.WeatherUiState
 @Composable
 fun PortraitLayout(
     state: WeatherUiState,
-    getDrawableResourceId: (Int?, String?) -> Int
+    getDrawableResourceId: (Int?) -> Int
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
