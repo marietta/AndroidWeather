@@ -11,7 +11,7 @@ fun getDrawableResourceId(iconCode: Int? = 30): Int {
         // Get the resource ID dynamically
         R.drawable::class.java.getField(resourceName).getInt(null)
     } catch (_: Exception) {
-        Log.d("getDrawableResourceId","Missing icon: $resourceName")
+        Log.d("getDrawableResourceId", "Missing icon: $resourceName")
         0
     }
 }
