@@ -14,22 +14,18 @@ sealed class ApiResult<out T> {
 }
 
 interface WeatherApi<T> {
-    val lat: Double get() = 47.395
-    val lon: Double get() = 19.123
-    val intervalInMinutes: Int get() = 10
-
-    suspend fun fetch(): ApiResult<T>
+    suspend fun fetch(lat: Double, lon: Double): ApiResult<T>
 }
 
 class WeatherapiClient : WeatherApi<WeatherapiForecast> {
     private val apiKey = BuildConfig.WEATHERAPI_KEY
 
-    private val url: String
-        get() = "https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$lat,$lon&days=1"
+    private fun getUrl(lat: Double, lon: Double) =
+        "https://api.weatherapi.com/v1/forecast.json?key=$apiKey&q=$lat,$lon&days=1"
 
-    override suspend fun fetch(): ApiResult<WeatherapiForecast> {
+    override suspend fun fetch(lat: Double, lon: Double): ApiResult<WeatherapiForecast> {
         return try {
-            val response = HttpClients.default.get(url)
+            val response = HttpClients.default.get(getUrl(lat, lon))
             if (response.status.value == 200) {
                 ApiResult.Success(response.body())
             } else {
@@ -37,7 +33,7 @@ class WeatherapiClient : WeatherApi<WeatherapiForecast> {
                 ApiResult.Error("API Error: ${response.status}")
             }
         } catch (e: Exception) {
-            Log.e("WeatherapiClient", e.toString())
+            Log.e("WeatherapiClient", "Fetch failed: ${e.message}")
             ApiResult.Error("Unexpected error", e)
         }
     }
@@ -46,31 +42,31 @@ class WeatherapiClient : WeatherApi<WeatherapiForecast> {
 class WundergroundClient : WeatherApi<WundergroundData> {
     private val apiKey = BuildConfig.WUNDERGROUND_KEY
 
-    private val baseUrl = "https://api.weather.com/v2/pws/observations/current"
-    private val v3Url = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current"
+    private val pwsBaseUrl = "https://api.weather.com/v2/pws/observations/current"
+    private val v3BaseUrl = "https://api.weather.com/v3/aggcommon/v3-wx-observations-current"
 
     private fun getPwsUrl(stationId: String) =
-        "$baseUrl?apiKey=$apiKey&stationId=$stationId&numericPrecision=decimal&format=json&units=m"
+        "$pwsBaseUrl?apiKey=$apiKey&stationId=$stationId&numericPrecision=decimal&format=json&units=m"
 
-    private val observationsUrl =
-        "$v3Url?apiKey=$apiKey&geocodes=$lat,$lon&language=en-US&units=m&format=json"
+    private fun getV3Url(lat: Double, lon: Double) =
+        "$v3BaseUrl?apiKey=$apiKey&geocodes=$lat,$lon&language=en-US&units=m&format=json"
 
-    override suspend fun fetch(): ApiResult<WundergroundData> {
+    suspend fun fetch(lat: Double, lon: Double, stationId: String): ApiResult<WundergroundData> {
         return try {
             // Main observation from a station
-            val response = HttpClients.default.get(getPwsUrl("IBUDAP576"))
-            val baseData: WundergroundData? = if (response.status.value == 200) {
-                response.body()
+            val pwsResponse = HttpClients.default.get(getPwsUrl(stationId))
+            val baseData: WundergroundData? = if (pwsResponse.status.value == 200) {
+                pwsResponse.body()
             } else {
-                Log.e("WundergroundClient", "PWS error: ${response.status}")
+                Log.e("WundergroundClient", "PWS error: ${pwsResponse.status}")
                 null
             }
 
             // Additional observations from V3 API
-            val v3Response = HttpClients.default.get(observationsUrl)
+            val v3Response = HttpClients.default.get(getV3Url(lat, lon))
             val v3Data: List<V3WxObservations?> = if (v3Response.status.value == 200) {
-                val response:List<V3WxObservations?> = v3Response.body()
-                if (response.firstOrNull()?.observationsCurrent != null) v3Response.body() else emptyList()
+                val body: List<V3WxObservations?> = v3Response.body()
+                if (body.firstOrNull()?.observationsCurrent != null) body else emptyList()
             } else {
                 Log.e("WundergroundClient", "V3 error: ${v3Response.status}")
                 emptyList()
@@ -79,11 +75,16 @@ class WundergroundClient : WeatherApi<WundergroundData> {
             if (baseData == null && v3Data.isEmpty()) {
                 ApiResult.Error("Failed to fetch Wunderground data")
             } else {
-                ApiResult.Success((baseData ?: WundergroundData(emptyList())).copy(observationsCurrent = v3Data))
+                val finalData = (baseData ?: WundergroundData(emptyList())).copy(observationsCurrent = v3Data)
+                ApiResult.Success(finalData)
             }
         } catch (e: Exception) {
-            Log.e("WundergroundClient", e.toString())
+            Log.e("WundergroundClient", "Fetch failed: ${e.message}")
             ApiResult.Error("Unexpected error", e)
         }
+    }
+
+    override suspend fun fetch(lat: Double, lon: Double): ApiResult<WundergroundData> {
+        return fetch(lat, lon, "IBUDAP576") // Default station
     }
 }

@@ -47,16 +47,18 @@ fun PressureSensorDisplay() {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        val pressure = (pressureValue ?: 0f).toInt()
+        val pressure = pressureValue?.toInt() ?: 0
         Text(text = stringResource(R.string.pressure_format, pressure))
 
         Icon(
             painter = painterResource(id = R.drawable.cyclone_48px),
             contentDescription = "Pressure Icon",
-            modifier = Modifier.size(56.dp).padding(6.dp)
+            modifier = Modifier
+                .size(56.dp)
+                .padding(6.dp)
         )
 
-        val ptext = when {
+        val pressureStatus = when {
             pressure == 0 -> stringResource(R.string.pressure_no_data)
             pressure < 990 -> stringResource(R.string.pressure_storm)
             pressure < 996 -> stringResource(R.string.pressure_wet)
@@ -64,7 +66,7 @@ fun PressureSensorDisplay() {
             pressure < 1030 -> stringResource(R.string.pressure_calm)
             else -> stringResource(R.string.pressure_drought)
         }
-        Text(text = ptext)
+        Text(text = pressureStatus)
     }
 }
 

@@ -53,7 +53,7 @@ fun MainWeatherInfo(state: WeatherUiState) {
     if (!state.isLoading && state.wunderground == null && state.error == null) {
         NoWeatherData()
     }
-    state.wunderground?.observations?.firstOrNull()?.obsTimeLocal?.let { time ->
+    state.wunderground?.firstObservation?.obsTimeLocal?.let { time ->
         Row(modifier = Modifier.padding(top = 8.dp)) {
             LastUpdated(time)
         }

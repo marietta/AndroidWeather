@@ -57,8 +57,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WeatherContent(uiState: WeatherUiState) {
     val orientation = LocalConfiguration.current.orientation
-    val frontColor =
-        if (uiState.weatherapi?.current?.isDay == 0) Color.LightGray else MaterialTheme.colorScheme.onBackground
+    val frontColor = if (uiState.weatherapi?.current?.isDay == 0) {
+        Color.LightGray
+    } else {
+        MaterialTheme.colorScheme.onBackground
+    }
 
     CompositionLocalProvider(LocalContentColor provides frontColor) {
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {

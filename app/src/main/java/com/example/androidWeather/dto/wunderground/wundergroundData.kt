@@ -7,7 +7,10 @@ import kotlinx.serialization.Serializable
 data class WundergroundData(
     val observations: List<Observation>,
     @SerialName("observationsCurrent") val observationsCurrent: List<V3WxObservations?> = emptyList(),
-)
+) {
+    val firstObservation: Observation? get() = observations.firstOrNull()
+    val firstV3Observation: ObservationsCurrent? get() = observationsCurrent.firstOrNull()?.observationsCurrent
+}
 
 @Serializable
 data class Observation(

@@ -32,12 +32,14 @@ class WeatherViewModel(
 
     private fun startLoops() {
         viewModelScope.launch {
+            // WeatherAPI loop
             launch {
                 while (isActive) {
                     fetchWeatherapiOnce()
                     delay(repository.weatherapiIntervalMinutes.coerceAtLeast(1) * 60 * 1000L)
                 }
             }
+            // Wunderground loop
             launch {
                 while (isActive) {
                     fetchWundergroundOnce()
@@ -48,42 +50,28 @@ class WeatherViewModel(
     }
 
     private suspend fun fetchWeatherapiOnce() {
-        val result = repository.fetchWeatherapi()
-        _state.update { currentState ->
-            when (result) {
-                is ApiResult.Success -> {
-                    if (result.data != null) {
-                        currentState.copy(
-                            weatherapi = result.data,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        currentState.copy(isLoading = false)
-                    }
-                }
-                is ApiResult.Error -> currentState.copy(
-                    isLoading = false,
-                    error = result.message
-                )
-            }
+        updateStateWithResult(repository.fetchWeatherapi()) { data, currentState ->
+            currentState.copy(weatherapi = data)
         }
     }
 
     private suspend fun fetchWundergroundOnce() {
-        val result = repository.fetchWunderground()
+        updateStateWithResult(repository.fetchWunderground()) { data, currentState ->
+            currentState.copy(wunderground = data)
+        }
+    }
+
+    private fun <T> updateStateWithResult(
+        result: ApiResult<T>,
+        onSuccess: (T, WeatherUiState) -> WeatherUiState
+    ) {
         _state.update { currentState ->
             when (result) {
                 is ApiResult.Success -> {
-                    if (result.data != null) {
-                        currentState.copy(
-                            wunderground = result.data,
-                            isLoading = false,
-                            error = null
-                        )
-                    } else {
-                        currentState.copy(isLoading = false)
-                    }
+                    onSuccess(result.data, currentState).copy(
+                        isLoading = false,
+                        error = null
+                    )
                 }
                 is ApiResult.Error -> currentState.copy(
                     isLoading = false,

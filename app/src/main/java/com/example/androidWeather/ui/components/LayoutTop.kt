@@ -29,7 +29,7 @@ fun LayoutTop(
             )
         }
     } else if (wunderData != null) {
-        val intPart = wunderData.observations.firstOrNull()?.metric?.temp?.roundToInt()
+        val intPart = wunderData.firstObservation?.metric?.temp?.roundToInt()
         if (intPart != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -48,7 +48,7 @@ fun LayoutTop(
                 )
             }
             Text(
-                text = wunderData.observationsCurrent.firstOrNull()?.observationsCurrent?.wxPhraseLong ?: "",
+                text = wunderData.firstV3Observation?.wxPhraseLong ?: "",
                 fontSize = 48.sp,
                 lineHeight = 48.sp,
                 fontWeight = FontWeight.Light,

@@ -17,14 +17,18 @@ class WeatherRepository(
     private val weatherapi: WeatherapiClient = WeatherapiClient(),
     private val wunderground: WundergroundClient = WundergroundClient(),
 ) {
-    val weatherapiIntervalMinutes: Int get() = weatherapi.intervalInMinutes
-    val wundergroundIntervalMinutes: Int get() = wunderground.intervalInMinutes
+    val lat = 47.395
+    val lon = 19.123
+    val stationId = "IBUDAP576"
+
+    val weatherapiIntervalMinutes: Int = 10
+    val wundergroundIntervalMinutes: Int = 10
 
     suspend fun fetchWeatherapi(): ApiResult<WeatherapiForecast> = withContext(Dispatchers.IO) {
-        weatherapi.fetch()
+        weatherapi.fetch(lat, lon)
     }
 
     suspend fun fetchWunderground(): ApiResult<WundergroundData> = withContext(Dispatchers.IO) {
-        wunderground.fetch()
+        wunderground.fetch(lat, lon, stationId)
     }
 }

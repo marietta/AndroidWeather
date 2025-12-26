@@ -39,7 +39,7 @@ fun LayoutBottom(
 
 @Composable
 private fun HumidityRow(wunderData: WundergroundData?) {
-    val humidity = wunderData?.observations?.firstOrNull()?.humidity?.toInt()
+    val humidity = wunderData?.firstObservation?.humidity?.toInt()
     val humidText = when {
         humidity == null -> "-"
         humidity < 40 -> stringResource(R.string.humidity_dry)
@@ -57,7 +57,7 @@ private fun HumidityRow(wunderData: WundergroundData?) {
 
 @Composable
 private fun DewPointRow(wunderData: WundergroundData?) {
-    val dewpt = wunderData?.observations?.firstOrNull()?.metric?.dewpt?.toInt()
+    val dewpt = wunderData?.firstObservation?.metric?.dewpt?.toInt()
     WeatherRow(
         valueText = stringResource(R.string.dew_point),
         iconResId = R.drawable.dew_point_24dp,
@@ -68,7 +68,7 @@ private fun DewPointRow(wunderData: WundergroundData?) {
 
 @Composable
 private fun WindRow(wunderData: WundergroundData?) {
-    val windSpeed = wunderData?.observationsCurrent?.firstOrNull()?.observationsCurrent?.windSpeed
+    val windSpeed = wunderData?.firstV3Observation?.windSpeed
     val windText = when {
         windSpeed == null -> "-"
         windSpeed == 0 -> stringResource(R.string.wind_still)
@@ -111,8 +111,7 @@ private fun WeatherIcon(
     wunderData: WundergroundData?,
     getDrawableResourceId: (Int?) -> Int
 ) {
-    val currentObs = wunderData?.observationsCurrent?.firstOrNull()?.observationsCurrent
-    val iconCode = currentObs?.iconCode
+    val iconCode = wunderData?.firstV3Observation?.iconCode
 
     if (iconCode != null) {
         val context = LocalContext.current
@@ -150,9 +149,9 @@ private fun WeatherIcon(
 
 @Composable
 private fun UVDisplay(wunderData: WundergroundData?) {
-    val currentObs = wunderData?.observationsCurrent?.firstOrNull()?.observationsCurrent
-    if (currentObs?.dayOrNight == "D") {
-        val uv = wunderData.observations.firstOrNull()?.uv?.toInt()
+    val currentObsV3 = wunderData?.firstV3Observation
+    if (currentObsV3?.dayOrNight == "D") {
+        val uv = wunderData.firstObservation?.uv?.toInt()
         if (uv != null) {
             val (fontWeight, color, fontSize) = when {
                 uv >= 8 -> Triple(FontWeight.Bold, Color(209, 57, 74), 54.sp)
