@@ -8,50 +8,28 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import coil.ImageLoader
-import coil.annotation.ExperimentalCoilApi
 import coil.decode.SvgDecoder
 import coil.intercept.Interceptor
 import coil.request.ImageRequest
-import coil.request.ImageResult
 import coil.request.SuccessResult
-import coil.test.FakeImageLoaderEngine
 import com.example.androidWeather.dto.wunderground.ObservationsCurrent
 import com.example.androidWeather.dto.wunderground.V3WxObservations
 import com.example.androidWeather.dto.wunderground.WundergroundData
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], qualifiers = "w360dp-h640dp")
 class WeatherIconTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    @OptIn(ExperimentalCoilApi::class)
-    private lateinit var engine: FakeImageLoaderEngine
-
-    private val requests = mutableListOf<ImageRequest>()
-
-    @OptIn(ExperimentalCoilApi::class)
-    @Before
-    fun setup() {
-        requests.clear()
-        engine = FakeImageLoaderEngine.Builder()
-            .intercept("https://www.wunderground.com/static/i/c/v4/35.svg", ColorDrawable(Color.RED))
-            .build()
-    }
-
     @Test
     fun weatherIcon_withCode35_showsIcon() {
-        // Clear any previous requests
-        requests.clear()
-        
+        val requests = mutableListOf<ImageRequest>()
         // Setup mock data with icon code 35
         val mockObservationsCurrent = ObservationsCurrent(
             cloudCoverPhrase = "Partly Cloudy",
@@ -106,27 +84,25 @@ class WeatherIconTest {
         // Verify that the Weather Icon is displayed and has the correct URL
         val expectedUrl = "https://www.wunderground.com/static/i/c/v4/35.svg"
 
-        val debugEngine = object : Interceptor {
-            override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
-                requests.add(chain.request)
-                return SuccessResult(
-                    drawable = ColorDrawable(Color.RED),
-                    request = chain.request,
-                    dataSource = coil.decode.DataSource.MEMORY
-                )
-            }
+        val debugEngine = Interceptor { chain ->
+            val request = chain.request
+            requests.add(request)
+            SuccessResult(
+                drawable = ColorDrawable(Color.RED),
+                request = request,
+                dataSource = coil.decode.DataSource.MEMORY
+            )
         }
 
-        // Render the LayoutBottom (which contains WeatherIcon)
-        lateinit var imageLoader: ImageLoader
+        // Render the WeatherIcon directly
         composeTestRule.setContent {
             val context = LocalContext.current
-            imageLoader = remember {
+            val imageLoader = remember {
                 ImageLoader.Builder(context)
                     .components { add(debugEngine) }
                     .build()
             }
-            LayoutBottom(
+            WeatherIcon(
                 wunderData = mockWunderData,
                 getDrawableResourceId = { 0 }, // Simulate missing local resource
                 imageLoader = imageLoader
