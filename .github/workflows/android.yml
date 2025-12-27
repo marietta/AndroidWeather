@@ -24,21 +24,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      - name: Build Debug APK and Run Tests
         env:
           ACCUWEATHER_KEY: ${{ secrets.ACCUWEATHER_KEY }}
           WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
           OPENWEATHER_KEY: ${{ secrets.OPENWEATHER_KEY }}
           WUNDERGROUND_KEY: ${{ secrets.WUNDERGROUND_KEY }}
-        run: ./gradlew build --no-daemon
-
-      - name: Build Debug APK
-        env:
-          ACCUWEATHER_KEY: ${{ secrets.ACCUWEATHER_KEY }}
-          WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
-          OPENWEATHER_KEY: ${{ secrets.OPENWEATHER_KEY }}
-          WUNDERGROUND_KEY: ${{ secrets.WUNDERGROUND_KEY }}
-        run: ./gradlew assembleDebug
+        run: ./gradlew testDebugUnitTest assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

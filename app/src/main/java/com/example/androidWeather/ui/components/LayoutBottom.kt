@@ -108,7 +108,7 @@ private fun WeatherRow(
 }
 
 @Composable
-private fun WeatherIcon(
+internal fun WeatherIcon(
     wunderData: WundergroundData?,
     getDrawableResourceId: (Int?) -> Int,
     imageLoader: coil.ImageLoader? = null
